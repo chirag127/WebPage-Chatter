@@ -1,5 +1,8 @@
 // WebPage Chatter - Background Script
 
+// Import configuration
+import { Config } from "../utils/config.js";
+
 // Initialize extension when installed or updated
 chrome.runtime.onInstalled.addListener(async () => {
     console.log("WebPage Chatter extension installed or updated");
@@ -92,13 +95,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  */
 async function handleChatRequest(data) {
     try {
-        // Get the API endpoint from settings or use default
+        // Get the API endpoint from settings or use default from Config
         const settings = await chrome.storage.sync.get([
             "apiEndpoint",
             "requestTimeout",
         ]);
-        const apiUrl = settings.apiEndpoint || "http://localhost:8000/api/chat";
-        const timeout = settings.requestTimeout || 60000; // Default timeout: 60 seconds
+        const apiUrl = settings.apiEndpoint || Config.API.DEFAULT_ENDPOINT;
+        const timeout = settings.requestTimeout || Config.API.DEFAULT_TIMEOUT;
 
         // Create an AbortController for timeout handling
         const controller = new AbortController();

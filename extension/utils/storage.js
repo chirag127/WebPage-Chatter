@@ -1,5 +1,8 @@
 // WebPage Chatter - Storage Utilities
 
+// Import configuration
+import { Config } from "./config.js";
+
 /**
  * Utility functions for storage operations
  */
@@ -12,11 +15,11 @@ const StorageUtils = {
         CURRENT_CHAT_SESSION: "currentChatSession",
     },
 
-    // Storage limits (in bytes)
+    // Storage limits (in bytes) - using values from Config
     LIMITS: {
-        LOCAL_STORAGE: 5242880, // 5MB for chrome.storage.local
-        SYNC_STORAGE: 102400, // 100KB for chrome.storage.sync
-        WARNING_THRESHOLD: 0.8, // 80% of capacity
+        LOCAL_STORAGE: Config.STORAGE.LOCAL_STORAGE_LIMIT,
+        SYNC_STORAGE: Config.STORAGE.SYNC_STORAGE_LIMIT,
+        WARNING_THRESHOLD: Config.STORAGE.WARNING_THRESHOLD,
     },
 
     /**
@@ -36,9 +39,11 @@ const StorageUtils = {
                 (result) => {
                     resolve({
                         apiKey: result.apiKey || "",
-                        apiEndpoint: result.apiEndpoint || "",
-                        requestTimeout: result.requestTimeout || 60000, // Default: 60 seconds
-                        ttsSpeed: result.ttsSpeed || 1.0,
+                        apiEndpoint:
+                            result.apiEndpoint || Config.API.DEFAULT_ENDPOINT,
+                        requestTimeout:
+                            result.requestTimeout || Config.API.DEFAULT_TIMEOUT,
+                        ttsSpeed: result.ttsSpeed || Config.TTS.DEFAULT_SPEED,
                         ttsVoiceURI: result.ttsVoiceURI || "",
                     });
                 }

@@ -1,5 +1,8 @@
 // WebPage Chatter - Settings Script
 
+// Import configuration
+import { Config } from "../utils/config.js";
+
 // DOM Elements
 const apiKeyInput = document.getElementById("api-key");
 const apiKeyError = document.getElementById("api-key-error");
@@ -43,7 +46,7 @@ async function loadSettings() {
         if (settings.apiEndpoint) {
             apiEndpointInput.value = settings.apiEndpoint;
         } else {
-            apiEndpointInput.value = "http://localhost:8000/api/chat";
+            apiEndpointInput.value = Config.API.DEFAULT_ENDPOINT;
         }
 
         // Set request timeout if available
@@ -52,7 +55,9 @@ async function loadSettings() {
                 settings.requestTimeout / 1000
             ); // Convert from ms to seconds
         } else {
-            requestTimeoutInput.value = 60; // Default: 60 seconds
+            requestTimeoutInput.value = Math.floor(
+                Config.API.DEFAULT_TIMEOUT / 1000
+            ); // Convert from ms to seconds
         }
 
         // Set TTS speed if available
@@ -183,7 +188,7 @@ async function saveSettings() {
 
         // Get other settings
         const apiEndpoint =
-            apiEndpointInput.value.trim() || "http://localhost:8000/api/chat";
+            apiEndpointInput.value.trim() || Config.API.DEFAULT_ENDPOINT;
         const requestTimeout = parseInt(requestTimeoutInput.value, 10) * 1000; // Convert seconds to ms
         const ttsSpeed = parseFloat(ttsSpeedSelect.value);
         const ttsVoiceURI = ttsVoiceSelect.value;

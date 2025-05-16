@@ -95,7 +95,7 @@
                             type="text"
                             id="api-endpoint"
                             class="form-control"
-                            placeholder="http://localhost:8000/api/chat"
+                            placeholder="API endpoint URL"
                         />
                         <small class="form-text"
                             >Only change this if you're running your own backend
@@ -113,7 +113,6 @@
                             class="form-control"
                             min="10"
                             max="300"
-                            value="60"
                         />
                         <small class="form-text"
                             >Maximum time to wait for a response from the API.
@@ -189,8 +188,8 @@
             </footer>
         </div>
 
-        <script src="../utils/storage.js"></script>
+        <script src="../utils/storage.js" type="module"></script>
         <script src="../utils/tts.js"></script>
-        <script src="settings.js"></script>
+        <script src="settings.js" type="module"></script>
     </body>
 </html>

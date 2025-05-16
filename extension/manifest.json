@@ -23,9 +23,16 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content/content.js"],
-      "css": ["content/content.css"]
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/content.js"
+      ],
+      "css": [
+        "content/content.css"
+      ],
+      "type": "module"
     }
   ],
   "permissions": [
@@ -56,8 +63,13 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["sidebar/sidebar.html", "assets/*"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "sidebar/sidebar.html",
+        "assets/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }
