@@ -1,0 +1,26 @@
+{
+  "name": "webpage-chatter",
+  "version": "1.0.0",
+  "description": "Chat with any webpage using Gemini AI",
+  "author": "Chirag Singhal",
+  "license": "MIT",
+  "scripts": {
+    "generate-icons": "node ../scripts/generate-pngs.js"
+  },
+  "devDependencies": {
+    "sharp": "^0.33.5"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chirag127/WebPage-Chatter"
+  },
+  "bugs": {
+    "url": "https://github.com/chirag127/WebPage-Chatter/issues"
+  },
+  "homepage": "https://github.com/chirag127/WebPage-Chatter#readme",
+  "changelog": "https://github.com/chirag127/WebPage-Chatter/blob/main/CHANGELOG.md"
+}
