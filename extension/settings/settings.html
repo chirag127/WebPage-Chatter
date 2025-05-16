@@ -68,10 +68,19 @@
                                 </svg>
                             </button>
                         </div>
-                        <small class="form-text"
-                            >Your API key is stored locally and is only sent to
-                            the Gemini API via our secure backend.</small
-                        >
+                        <div class="api-key-help">
+                            <small class="form-text">
+                                Your API key is stored locally and is only sent
+                                to the Gemini API via our secure backend.
+                            </small>
+                            <a
+                                href="https://aistudio.google.com/app/apikey"
+                                target="_blank"
+                                class="get-api-key-link"
+                            >
+                                Don't have a key? Get one here
+                            </a>
+                        </div>
                         <div
                             id="api-key-error"
                             class="error-message hidden"
@@ -129,6 +138,11 @@
                             <option value="2">2x (Very Fast)</option>
                             <option value="3">3x (Ultra Fast)</option>
                             <option value="4">4x (Extremely Fast)</option>
+                            <option value="6">6x (Super Fast)</option>
+                            <option value="8">8x (Hyper Fast)</option>
+                            <option value="10">10x (Ludicrous Speed)</option>
+                            <option value="12">12x (Warp Speed)</option>
+                            <option value="16">16x (Maximum Speed)</option>
                         </select>
                     </div>
 

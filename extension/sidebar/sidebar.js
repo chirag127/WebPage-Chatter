@@ -1,5 +1,18 @@
 // WebPage Chatter - Sidebar Script
 
+// Configure marked.js options
+marked.setOptions({
+    breaks: true, // Add line breaks on single line breaks
+    gfm: true, // Use GitHub Flavored Markdown
+    headerIds: false, // Don't add IDs to headers
+    mangle: false, // Don't mangle email links
+    sanitize: false, // Don't sanitize HTML (handled by innerHTML)
+    silent: true, // Don't throw errors
+    smartLists: true, // Use smarter list behavior
+    smartypants: true, // Use "smart" typographic punctuation
+    xhtml: false, // Don't use XHTML-style self-closing tags
+});
+
 // DOM Elements
 const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
@@ -226,8 +239,17 @@ async function handleSendMessage() {
                     // Set the complete text response
                     currentAssistantMessage = response.text;
 
-                    // Update message element
-                    messageElement.textContent = currentAssistantMessage;
+                    // Update message element with Markdown rendering
+                    if (
+                        currentAssistantMessage &&
+                        currentAssistantMessage.trim()
+                    ) {
+                        messageElement.innerHTML = marked.parse(
+                            currentAssistantMessage
+                        );
+                    } else {
+                        messageElement.textContent = currentAssistantMessage;
+                    }
 
                     // Scroll to bottom
                     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -376,8 +398,14 @@ async function processStreamingResponse(
                 const chunk = decoder.decode(value, { stream: true });
                 currentAssistantMessage += chunk;
 
-                // Update message element
-                messageElement.textContent = currentAssistantMessage;
+                // Update message element with Markdown rendering
+                if (currentAssistantMessage && currentAssistantMessage.trim()) {
+                    messageElement.innerHTML = marked.parse(
+                        currentAssistantMessage
+                    );
+                } else {
+                    messageElement.textContent = currentAssistantMessage;
+                }
 
                 // Scroll to bottom
                 chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -418,7 +446,13 @@ async function processStreamingResponse(
                 }
 
                 // Append error message to the current content
-                messageElement.textContent = currentAssistantMessage;
+                if (currentAssistantMessage && currentAssistantMessage.trim()) {
+                    messageElement.innerHTML = marked.parse(
+                        currentAssistantMessage
+                    );
+                } else {
+                    messageElement.textContent = currentAssistantMessage;
+                }
 
                 // Add a paragraph with the error
                 const errorParagraph = document.createElement("p");
@@ -472,9 +506,49 @@ function addAssistantMessage(message) {
     const messageElement = document.createElement("div");
     messageElement.className = "chat-message assistant-message";
 
+    // Create message header with TTS button
+    const messageHeader = document.createElement("div");
+    messageHeader.className = "message-header";
+
+    // Create role label
+    const roleLabel = document.createElement("div");
+    roleLabel.className = "message-role";
+    roleLabel.textContent = "Assistant:";
+    messageHeader.appendChild(roleLabel);
+
+    // Create TTS button
+    const ttsButton = document.createElement("button");
+    ttsButton.className = "message-tts-button";
+    ttsButton.title = "Read aloud";
+    ttsButton.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
+
+    // Add click event to TTS button
+    ttsButton.addEventListener("click", () => {
+        // Get the message text
+        const messageText = contentElement.textContent || "";
+
+        // Set up TTS with the message text
+        TTSUtils.setText(messageText);
+        TTSUtils.play();
+
+        // Show TTS controls
+        ttsControls.classList.remove("hidden");
+    });
+
+    messageHeader.appendChild(ttsButton);
+    messageElement.appendChild(messageHeader);
+
+    // Create content element
     const contentElement = document.createElement("div");
-    contentElement.className = "message-content";
-    contentElement.textContent = message;
+    contentElement.className = "message-content markdown-content";
+
+    // Use marked.js to render Markdown if message is not empty
+    if (message && message.trim()) {
+        contentElement.innerHTML = marked.parse(message);
+    } else {
+        contentElement.textContent = message;
+    }
 
     messageElement.appendChild(contentElement);
     chatMessages.appendChild(messageElement);
