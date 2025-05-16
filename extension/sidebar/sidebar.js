@@ -109,9 +109,29 @@ function setupEventListeners() {
 
     // Enter key in chat input
     chatInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            handleSendMessage();
+        if (event.key === "Enter") {
+            // If Ctrl+Enter is pressed, insert a line break
+            if (event.ctrlKey) {
+                // Don't submit the form
+                event.preventDefault();
+
+                // Get cursor position
+                const cursorPos = chatInput.selectionStart;
+
+                // Insert a newline at cursor position
+                const textBefore = chatInput.value.substring(0, cursorPos);
+                const textAfter = chatInput.value.substring(cursorPos);
+                chatInput.value = textBefore + "\n" + textAfter;
+
+                // Move cursor position after the inserted newline
+                chatInput.selectionStart = chatInput.selectionEnd =
+                    cursorPos + 1;
+            }
+            // If just Enter is pressed (without Ctrl or Shift), send the message
+            else if (!event.shiftKey) {
+                event.preventDefault();
+                handleSendMessage();
+            }
         }
     });
 
