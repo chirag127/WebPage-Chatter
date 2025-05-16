@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebPage Chatter Settings</title>
+  <link rel="stylesheet" href="../assets/styles/common.css">
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="settings-container">
+    <header class="settings-header">
+      <h1>WebPage Chatter Settings</h1>
+    </header>
+    
+    <main class="settings-content">
+      <section class="settings-section">
+        <h2>API Configuration</h2>
+        
+        <div class="form-group">
+          <label for="api-key">Gemini API Key</label>
+          <div class="input-with-button">
+            <input type="password" id="api-key" class="form-control" placeholder="Enter your Gemini API key">
+            <button id="toggle-api-key" class="toggle-button" title="Show/Hide API Key">
+              <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg id="eye-off-icon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            </button>
+          </div>
+          <small class="form-text">Your API key is stored locally and is only sent to the Gemini API via our secure backend.</small>
+          <div id="api-key-error" class="error-message hidden"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="api-endpoint">API Endpoint (Advanced)</label>
+          <input type="text" id="api-endpoint" class="form-control" placeholder="http://localhost:8000/api/chat">
+          <small class="form-text">Only change this if you're running your own backend server.</small>
+        </div>
+      </section>
+      
+      <section class="settings-section">
+        <h2>Text-to-Speech Settings</h2>
+        
+        <div class="form-group">
+          <label for="tts-speed">Default Speech Rate</label>
+          <select id="tts-speed" class="form-control">
+            <option value="0.25">0.25x (Very Slow)</option>
+            <option value="0.5">0.5x (Slow)</option>
+            <option value="0.75">0.75x (Slightly Slow)</option>
+            <option value="1" selected>1x (Normal)</option>
+            <option value="1.25">1.25x (Slightly Fast)</option>
+            <option value="1.5">1.5x (Fast)</option>
+            <option value="1.75">1.75x (Faster)</option>
+            <option value="2">2x (Very Fast)</option>
+            <option value="3">3x (Ultra Fast)</option>
+            <option value="4">4x (Extremely Fast)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="tts-voice">Default Voice</label>
+          <select id="tts-voice" class="form-control">
+            <option value="">Loading voices...</option>
+          </select>
+          <small class="form-text">Available voices depend on your browser and operating system.</small>
+        </div>
+        
+        <div class="form-group">
+          <button id="test-tts" class="button secondary">Test Voice</button>
+        </div>
+      </section>
+      
+      <section class="settings-section">
+        <h2>Storage Management</h2>
+        
+        <div class="form-group">
+          <button id="clear-saved-answers" class="button danger">Clear Saved Answers</button>
+          <small class="form-text">This will permanently delete all your saved chat answers.</small>
+        </div>
+      </section>
+    </main>
+    
+    <footer class="settings-footer">
+      <button id="save-settings" class="button primary">Save Settings</button>
+      <div id="save-status" class="save-status hidden">Settings saved successfully!</div>
+    </footer>
+  </div>
+  
+  <script src="../utils/storage.js"></script>
+  <script src="../utils/tts.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>
