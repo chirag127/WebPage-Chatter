@@ -77,6 +77,7 @@ async def get_gemini_response(user_api_key: str, model_name: str, input_text_par
         error_type = type(e).__name__
         error_message = str(e)
 
+
         # Log the error
         logger.error(f"Error during Gemini API call: {error_type}: {error_message}")
 
