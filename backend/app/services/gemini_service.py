@@ -51,9 +51,10 @@ async def get_gemini_response(user_api_key: str, model_name: str, input_text_par
             ),
         ]
 
-        # Configure response generation with Markdown formatting
+        # Configure response generation with plain text
+        # Note: We'll still render as Markdown on the frontend
         generate_content_config = types.GenerateContentConfig(
-            response_mime_type="text/markdown",
+            response_mime_type="text/plain",
         )
 
         # Use the retry decorator for the API call
