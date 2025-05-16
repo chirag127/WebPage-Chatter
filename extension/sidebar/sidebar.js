@@ -1,5 +1,11 @@
 // WebPage Chatter - Sidebar Script
 
+// Import utilities
+import { Config } from "../utils/config.js";
+import { StorageUtils } from "../utils/storage.js";
+import { APIUtils } from "../utils/api.js";
+import { TTSUtils } from "../utils/tts.js";
+
 // Configure marked.js options
 marked.setOptions({
     breaks: true, // Add line breaks on single line breaks
