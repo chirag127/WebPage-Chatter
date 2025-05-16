@@ -4,6 +4,21 @@
  * Utility functions for storage operations
  */
 const StorageUtils = {
+    // Storage keys
+    KEYS: {
+        SETTINGS: "settings",
+        SAVED_ANSWERS: "savedAnswers",
+        CHAT_HISTORY: "chatHistory",
+        CURRENT_CHAT_SESSION: "currentChatSession",
+    },
+
+    // Storage limits (in bytes)
+    LIMITS: {
+        LOCAL_STORAGE: 5242880, // 5MB for chrome.storage.local
+        SYNC_STORAGE: 102400, // 100KB for chrome.storage.sync
+        WARNING_THRESHOLD: 0.8, // 80% of capacity
+    },
+
     /**
      * Get settings from storage
      * @returns {Promise<Object>} - The settings object
@@ -109,5 +124,177 @@ const StorageUtils = {
         return new Promise((resolve) => {
             chrome.storage.local.remove(["currentChatSession"], resolve);
         });
+    },
+
+    /**
+     * Get chat history from storage
+     * @returns {Promise<Array>} - Array of chat sessions
+     */
+    getChatHistory: async function () {
+        return new Promise((resolve) => {
+            chrome.storage.local.get([this.KEYS.CHAT_HISTORY], (result) => {
+                resolve(result[this.KEYS.CHAT_HISTORY] || []);
+            });
+        });
+    },
+
+    /**
+     * Save chat session to history
+     * @param {Object} chatSession - The chat session to save
+     * @returns {Promise<void>}
+     */
+    saveChatToHistory: async function (chatSession) {
+        try {
+            // Get current chat history
+            const chatHistory = await this.getChatHistory();
+
+            // Check if this chat session already exists in history (by ID)
+            const existingIndex = chatHistory.findIndex(
+                (session) => session.id === chatSession.id
+            );
+
+            if (existingIndex !== -1) {
+                // Update existing session
+                chatHistory[existingIndex] = chatSession;
+            } else {
+                // Add new session to the beginning of the array
+                chatHistory.unshift(chatSession);
+            }
+
+            // Save updated history
+            return new Promise((resolve, reject) => {
+                chrome.storage.local.set(
+                    { [this.KEYS.CHAT_HISTORY]: chatHistory },
+                    () => {
+                        if (chrome.runtime.lastError) {
+                            reject(chrome.runtime.lastError);
+                        } else {
+                            resolve();
+                        }
+                    }
+                );
+            });
+        } catch (error) {
+            console.error("Error saving chat to history:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Delete a chat session from history
+     * @param {string} sessionId - ID of the session to delete
+     * @returns {Promise<void>}
+     */
+    deleteChatFromHistory: async function (sessionId) {
+        try {
+            // Get current chat history
+            const chatHistory = await this.getChatHistory();
+
+            // Filter out the session to delete
+            const updatedHistory = chatHistory.filter(
+                (session) => session.id !== sessionId
+            );
+
+            // Save updated history
+            return new Promise((resolve) => {
+                chrome.storage.local.set(
+                    { [this.KEYS.CHAT_HISTORY]: updatedHistory },
+                    resolve
+                );
+            });
+        } catch (error) {
+            console.error("Error deleting chat from history:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Clear all chat history
+     * @returns {Promise<void>}
+     */
+    clearChatHistory: async function () {
+        return new Promise((resolve) => {
+            chrome.storage.local.remove([this.KEYS.CHAT_HISTORY], resolve);
+        });
+    },
+
+    /**
+     * Search chat history by keyword
+     * @param {string} keyword - Keyword to search for
+     * @returns {Promise<Array>} - Array of matching chat sessions
+     */
+    searchChatHistory: async function (keyword) {
+        try {
+            if (!keyword || keyword.trim() === "") {
+                return this.getChatHistory();
+            }
+
+            const chatHistory = await this.getChatHistory();
+            const searchTerm = keyword.toLowerCase().trim();
+
+            return chatHistory.filter((session) => {
+                // Search in page title and URL
+                if (
+                    session.pageTitle &&
+                    session.pageTitle.toLowerCase().includes(searchTerm)
+                ) {
+                    return true;
+                }
+                if (
+                    session.pageUrl &&
+                    session.pageUrl.toLowerCase().includes(searchTerm)
+                ) {
+                    return true;
+                }
+
+                // Search in messages
+                return session.messages.some(
+                    (message) =>
+                        message.content &&
+                        message.content.toLowerCase().includes(searchTerm)
+                );
+            });
+        } catch (error) {
+            console.error("Error searching chat history:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Get storage usage information
+     * @returns {Promise<Object>} - Storage usage information
+     */
+    getStorageUsage: async function () {
+        return new Promise((resolve) => {
+            chrome.storage.local.getBytesInUse(null, (bytesInUse) => {
+                const percentUsed = bytesInUse / this.LIMITS.LOCAL_STORAGE;
+                const isNearLimit =
+                    percentUsed >= this.LIMITS.WARNING_THRESHOLD;
+
+                resolve({
+                    bytesUsed: bytesInUse,
+                    bytesTotal: this.LIMITS.LOCAL_STORAGE,
+                    percentUsed: percentUsed,
+                    isNearLimit: isNearLimit,
+                    formattedUsed: this.formatBytes(bytesInUse),
+                    formattedTotal: this.formatBytes(this.LIMITS.LOCAL_STORAGE),
+                });
+            });
+        });
+    },
+
+    /**
+     * Format bytes to human-readable format
+     * @param {number} bytes - Bytes to format
+     * @returns {string} - Formatted string
+     */
+    formatBytes: function (bytes) {
+        if (bytes === 0) return "0 Bytes";
+
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     },
 };

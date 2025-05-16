@@ -13,6 +13,31 @@
                 <h1>WebPage Chatter</h1>
                 <div class="header-actions">
                     <button
+                        id="history-button"
+                        class="icon-button"
+                        title="Chat History"
+                    >
+                        <div class="badge-container">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span id="history-count" class="badge hidden"
+                                >0</span
+                            >
+                        </div>
+                    </button>
+                    <button
                         id="settings-button"
                         class="icon-button"
                         title="Settings"
@@ -138,6 +163,11 @@
                         <option value="2">2x</option>
                         <option value="3">3x</option>
                         <option value="4">4x</option>
+                        <option value="6">6x</option>
+                        <option value="8">8x</option>
+                        <option value="10">10x</option>
+                        <option value="12">12x</option>
+                        <option value="16">16x</option>
                     </select>
                 </div>
             </div>
@@ -163,6 +193,91 @@
                         id="saved-answers-list"
                         class="saved-answers-list"
                     ></div>
+                </div>
+            </div>
+
+            <div id="chat-history-modal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Chat History</h2>
+                        <button id="close-history-modal" class="close-button">
+                            &times;
+                        </button>
+                    </div>
+                    <div class="modal-search">
+                        <div class="search-container">
+                            <input
+                                type="text"
+                                id="history-search"
+                                class="search-input"
+                                placeholder="Search conversations..."
+                            />
+                            <button
+                                id="history-search-button"
+                                class="search-button"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line
+                                        x1="21"
+                                        y1="21"
+                                        x2="16.65"
+                                        y2="16.65"
+                                    ></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="history-actions">
+                            <button
+                                id="clear-history-button"
+                                class="button danger clear-all-button"
+                            >
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
+                    <div id="chat-history-list" class="chat-history-list"></div>
+                    <div id="history-pagination" class="pagination">
+                        <button
+                            id="prev-page"
+                            class="pagination-button"
+                            disabled
+                        >
+                            Previous
+                        </button>
+                        <span id="page-info" class="page-info"
+                            >Page 1 of 1</span
+                        >
+                        <button
+                            id="next-page"
+                            class="pagination-button"
+                            disabled
+                        >
+                            Next
+                        </button>
+                    </div>
+                    <div id="storage-info" class="storage-info">
+                        <div class="storage-bar">
+                            <div
+                                id="storage-usage"
+                                class="storage-usage"
+                                style="width: 0%"
+                            ></div>
+                        </div>
+                        <div id="storage-text" class="storage-text">
+                            Storage: 0 MB / 5 MB
+                        </div>
+                    </div>
                 </div>
             </div>
 

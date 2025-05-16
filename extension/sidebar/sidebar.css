@@ -39,10 +39,32 @@
     border-radius: 4px;
     color: #555555;
     transition: background-color 0.2s;
+    position: relative;
 }
 
 .icon-button:hover {
     background-color: #e0e0e0;
+}
+
+.badge-container {
+    position: relative;
+    display: inline-flex;
+}
+
+.badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #f44336;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
 }
 
 .api-key-warning {
@@ -635,4 +657,198 @@
 
 .hidden {
     display: none !important;
+}
+
+/* Chat History Styles */
+.modal-search {
+    display: flex;
+    padding: 16px;
+    border-bottom: 1px solid #e0e0e0;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap; /* Prevent wrapping */
+    gap: 12px; /* Add gap between search container and actions */
+}
+
+.search-container {
+    display: flex;
+    flex: 1;
+    margin-right: 16px;
+    min-width: 0; /* Allow container to shrink below content size */
+}
+
+.search-input {
+    flex: 1;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px 0 0 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    outline: none;
+    min-width: 0; /* Allow input to shrink */
+    width: 100%; /* Take full width of container */
+    overflow: hidden; /* Hide overflow */
+    text-overflow: ellipsis; /* Add ellipsis for overflow text */
+}
+
+.search-input:focus {
+    border-color: #2196f3;
+}
+
+.search-button {
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-button:hover {
+    background-color: #1976d2;
+}
+
+.history-actions {
+    display: flex;
+    gap: 8px;
+    min-width: 85px; /* Ensure minimum width for the button */
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.danger {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    white-space: nowrap; /* Prevent text wrapping */
+    padding: 8px 12px; /* Ensure adequate padding */
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.danger:hover {
+    background-color: #d32f2f;
+}
+
+.clear-all-button {
+    min-width: 75px; /* Ensure minimum width */
+    text-align: center; /* Center text */
+    display: inline-block; /* Ensure proper display */
+}
+
+.chat-history-list {
+    overflow-y: auto;
+    max-height: 50vh;
+    padding: 16px;
+}
+
+.history-item {
+    margin-bottom: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.history-item-header {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background-color: #f5f5f5;
+    cursor: pointer;
+}
+
+.history-item-title {
+    margin: 0;
+    font-size: 16px;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-item-date {
+    font-size: 12px;
+    color: #757575;
+    margin-right: 8px;
+}
+
+.history-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.history-item-content {
+    padding: 12px;
+    background-color: #ffffff;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.pagination-button {
+    background-color: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.pagination-button:hover:not(:disabled) {
+    background-color: #e0e0e0;
+}
+
+.pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-info {
+    margin: 0 16px;
+    font-size: 14px;
+}
+
+.storage-info {
+    padding: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.storage-bar {
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.storage-usage {
+    height: 100%;
+    background-color: #2196f3;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.storage-usage.warning {
+    background-color: #ff9800;
+}
+
+.storage-usage.danger {
+    background-color: #f44336;
+}
+
+.storage-text {
+    font-size: 12px;
+    color: #757575;
+    text-align: right;
 }

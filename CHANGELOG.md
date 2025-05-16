@@ -5,6 +5,48 @@ All notable changes to the WebPage Chatter project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2025-05-20
+
+### Fixed
+
+-   Fixed UI issue with "Clear All" button in Chat History modal being cut off
+-   Improved responsive layout of the Chat History search and actions area
+-   Enhanced button styling for better visibility and usability
+
+## [1.3.0] - 2025-05-19
+
+### Added
+
+-   Implemented automatic chat history saving feature
+-   Added Chat History button with count badge in the sidebar header
+-   Created comprehensive Chat History modal with:
+    -   Chronological list of past conversations organized by date and webpage title
+    -   Expandable conversation view to see full content
+    -   Search functionality to find conversations by keyword or website
+    -   Pagination for browsing through extensive history
+    -   Individual and bulk deletion options
+-   Added storage usage indicator with warnings when approaching limits
+-   Implemented error handling for storage limitations
+
+### Changed
+
+-   Improved storage management with automatic saving of chat sessions
+-   Enhanced UI with new icons and visual indicators
+
+## [1.2.0] - 2025-05-18
+
+### Added
+
+-   Added direct link to the official Gemini API key page in the settings
+-   Added TTS button at the top of each assistant response message
+-   Added Markdown rendering for Gemini API responses
+-   Increased maximum TTS speed option from 4x to 16x
+
+### Changed
+
+-   Updated backend to format Gemini API responses as Markdown
+-   Enhanced UI with better styling for Markdown elements (headings, code blocks, lists, etc.)
+
 ## [1.1.0] - 2025-05-17
 
 ### Changed

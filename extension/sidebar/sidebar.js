@@ -18,6 +18,8 @@ const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
 const sendButton = document.getElementById("send-button");
 const settingsButton = document.getElementById("settings-button");
+const historyButton = document.getElementById("history-button");
+const historyCount = document.getElementById("history-count");
 const apiKeyMissing = document.getElementById("api-key-missing");
 const openSettings = document.getElementById("open-settings");
 const ttsControls = document.getElementById("tts-controls");
@@ -33,6 +35,19 @@ const savedAnswersList = document.getElementById("saved-answers-list");
 const closeModal = document.getElementById("close-modal");
 const loadingIndicator = document.getElementById("loading-indicator");
 
+// Chat History Elements
+const chatHistoryModal = document.getElementById("chat-history-modal");
+const closeHistoryModal = document.getElementById("close-history-modal");
+const chatHistoryList = document.getElementById("chat-history-list");
+const historySearch = document.getElementById("history-search");
+const historySearchButton = document.getElementById("history-search-button");
+const clearHistoryButton = document.getElementById("clear-history-button");
+const prevPageButton = document.getElementById("prev-page");
+const nextPageButton = document.getElementById("next-page");
+const pageInfo = document.getElementById("page-info");
+const storageUsage = document.getElementById("storage-usage");
+const storageText = document.getElementById("storage-text");
+
 // State variables
 let pageContent = "";
 let currentChatSession = {
@@ -44,6 +59,14 @@ let currentChatSession = {
 };
 let currentAssistantMessage = "";
 let isProcessing = false;
+
+// Chat history state
+let chatHistory = [];
+let filteredHistory = [];
+let currentPage = 1;
+let itemsPerPage = 5;
+let totalPages = 1;
+let currentSearchTerm = "";
 
 // Initialize the sidebar
 document.addEventListener("DOMContentLoaded", async () => {
@@ -60,6 +83,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Extract page content
     await extractPageContent();
+
+    // Load chat history
+    await loadChatHistory();
+
+    // Update storage usage
+    await updateStorageUsage();
 
     // Set up event listeners
     setupEventListeners();
@@ -80,6 +109,11 @@ function setupEventListeners() {
         }
     });
 
+    // History button click
+    historyButton.addEventListener("click", () => {
+        showChatHistory();
+    });
+
     // Settings button click
     settingsButton.addEventListener("click", () => {
         chrome.runtime.sendMessage({ action: "openSettings" });
@@ -88,6 +122,56 @@ function setupEventListeners() {
     // Open settings button click
     openSettings.addEventListener("click", () => {
         chrome.runtime.sendMessage({ action: "openSettings" });
+    });
+
+    // Close history modal button click
+    closeHistoryModal.addEventListener("click", () => {
+        chatHistoryModal.classList.add("hidden");
+    });
+
+    // Click outside history modal to close
+    window.addEventListener("click", (event) => {
+        if (event.target === chatHistoryModal) {
+            chatHistoryModal.classList.add("hidden");
+        }
+    });
+
+    // History search
+    historySearchButton.addEventListener("click", () => {
+        searchChatHistory();
+    });
+
+    // History search on Enter key
+    historySearch.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            searchChatHistory();
+        }
+    });
+
+    // Clear history button click
+    clearHistoryButton.addEventListener("click", () => {
+        if (
+            confirm(
+                "Are you sure you want to clear all chat history? This action cannot be undone."
+            )
+        ) {
+            clearAllChatHistory();
+        }
+    });
+
+    // Pagination buttons
+    prevPageButton.addEventListener("click", () => {
+        if (currentPage > 1) {
+            currentPage--;
+            displayChatHistory();
+        }
+    });
+
+    nextPageButton.addEventListener("click", () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            displayChatHistory();
+        }
     });
 
     // TTS controls
@@ -292,6 +376,9 @@ async function handleSendMessage() {
 
                 // Set up TTS for the response
                 TTSUtils.setText(currentAssistantMessage);
+
+                // Automatically save chat session to history
+                await saveChatSessionToHistory();
             }
         } else {
             console.error("Chat request failed:", response.error);
@@ -712,6 +799,356 @@ async function deleteSavedAnswer(index) {
     } catch (error) {
         console.error("Error deleting saved answer:", error);
         addSystemMessage("Failed to delete saved answer.");
+    }
+}
+
+/**
+ * Load chat history from storage
+ */
+async function loadChatHistory() {
+    try {
+        // Get chat history from storage
+        chatHistory = await StorageUtils.getChatHistory();
+
+        // Update history count badge
+        updateHistoryCountBadge();
+
+        // Initialize filtered history
+        filteredHistory = [...chatHistory];
+
+        // Calculate total pages
+        totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+    } catch (error) {
+        console.error("Error loading chat history:", error);
+    }
+}
+
+/**
+ * Update the history count badge
+ */
+function updateHistoryCountBadge() {
+    if (chatHistory.length > 0) {
+        historyCount.textContent =
+            chatHistory.length > 99 ? "99+" : chatHistory.length;
+        historyCount.classList.remove("hidden");
+    } else {
+        historyCount.classList.add("hidden");
+    }
+}
+
+/**
+ * Save current chat session to history
+ */
+async function saveChatSessionToHistory() {
+    try {
+        // Only save if there are messages
+        if (currentChatSession.messages.length > 0) {
+            // Save to history
+            await StorageUtils.saveChatToHistory(currentChatSession);
+
+            // Reload chat history
+            await loadChatHistory();
+
+            // Update storage usage
+            await updateStorageUsage();
+        }
+    } catch (error) {
+        console.error("Error saving chat session to history:", error);
+        // Show error message if storage is full
+        if (error.message && error.message.includes("QUOTA_EXCEEDED")) {
+            addSystemMessage(
+                "Error: Storage quota exceeded. Please delete some chat history to continue."
+            );
+        }
+    }
+}
+
+/**
+ * Show chat history modal
+ */
+function showChatHistory() {
+    // Reset search
+    historySearch.value = "";
+    currentSearchTerm = "";
+
+    // Reset pagination
+    currentPage = 1;
+
+    // Reset filtered history
+    filteredHistory = [...chatHistory];
+
+    // Calculate total pages
+    totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+
+    // Display chat history
+    displayChatHistory();
+
+    // Show modal
+    chatHistoryModal.classList.remove("hidden");
+}
+
+/**
+ * Display chat history with pagination
+ */
+function displayChatHistory() {
+    // Clear chat history list
+    chatHistoryList.innerHTML = "";
+
+    // Update pagination info
+    updatePaginationInfo();
+
+    // If no history, show message
+    if (filteredHistory.length === 0) {
+        const noHistoryElement = document.createElement("div");
+        noHistoryElement.className = "no-saved-answers";
+        noHistoryElement.textContent = currentSearchTerm
+            ? "No matching conversations found."
+            : "No chat history yet.";
+        chatHistoryList.appendChild(noHistoryElement);
+        return;
+    }
+
+    // Calculate start and end indices for current page
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(
+        startIndex + itemsPerPage,
+        filteredHistory.length
+    );
+
+    // Display items for current page
+    for (let i = startIndex; i < endIndex; i++) {
+        const session = filteredHistory[i];
+        chatHistoryList.appendChild(createHistoryItem(session));
+    }
+}
+
+/**
+ * Create a history item element
+ * @param {Object} session - The chat session
+ * @returns {HTMLElement} - The history item element
+ */
+function createHistoryItem(session) {
+    const itemElement = document.createElement("div");
+    itemElement.className = "history-item";
+
+    // Create header
+    const headerElement = document.createElement("div");
+    headerElement.className = "history-item-header";
+
+    // Create title
+    const titleElement = document.createElement("h3");
+    titleElement.className = "history-item-title";
+    titleElement.textContent = session.pageTitle || "Untitled Page";
+
+    // Create date
+    const dateElement = document.createElement("span");
+    dateElement.className = "history-item-date";
+    dateElement.textContent = new Date(session.timestamp).toLocaleString();
+
+    // Create actions
+    const actionsElement = document.createElement("div");
+    actionsElement.className = "history-item-actions";
+
+    // Create delete button
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "icon-button";
+    deleteButton.title = "Delete";
+    deleteButton.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+    deleteButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        deleteChatSession(session.id);
+    });
+
+    actionsElement.appendChild(deleteButton);
+
+    // Add elements to header
+    headerElement.appendChild(titleElement);
+    headerElement.appendChild(dateElement);
+    headerElement.appendChild(actionsElement);
+
+    // Create content container
+    const contentElement = document.createElement("div");
+    contentElement.className = "history-item-content hidden";
+
+    // Add messages to content
+    session.messages.forEach((message) => {
+        const messageElement = document.createElement("div");
+        messageElement.className = `saved-message ${message.role}-message`;
+
+        const roleElement = document.createElement("div");
+        roleElement.className = "message-role";
+        roleElement.textContent =
+            message.role === "user" ? "You:" : "Assistant:";
+
+        const textElement = document.createElement("div");
+        textElement.className = "message-text";
+
+        // Use Markdown for assistant messages
+        if (
+            message.role === "assistant" &&
+            message.content &&
+            message.content.trim()
+        ) {
+            textElement.innerHTML = marked.parse(message.content);
+        } else {
+            textElement.textContent = message.content;
+        }
+
+        messageElement.appendChild(roleElement);
+        messageElement.appendChild(textElement);
+        contentElement.appendChild(messageElement);
+    });
+
+    // Toggle content visibility on header click
+    headerElement.addEventListener("click", () => {
+        contentElement.classList.toggle("hidden");
+    });
+
+    // Add elements to item
+    itemElement.appendChild(headerElement);
+    itemElement.appendChild(contentElement);
+
+    return itemElement;
+}
+
+/**
+ * Update pagination information
+ */
+function updatePaginationInfo() {
+    // Update page info
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+
+    // Update button states
+    prevPageButton.disabled = currentPage <= 1;
+    nextPageButton.disabled = currentPage >= totalPages;
+}
+
+/**
+ * Search chat history
+ */
+async function searchChatHistory() {
+    const searchTerm = historySearch.value.trim();
+    currentSearchTerm = searchTerm;
+
+    if (searchTerm === "") {
+        // Reset to full history
+        filteredHistory = [...chatHistory];
+    } else {
+        // Search history
+        filteredHistory = await StorageUtils.searchChatHistory(searchTerm);
+    }
+
+    // Reset pagination
+    currentPage = 1;
+    totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+
+    // Display results
+    displayChatHistory();
+}
+
+/**
+ * Delete a chat session from history
+ * @param {string} sessionId - The ID of the session to delete
+ */
+async function deleteChatSession(sessionId) {
+    try {
+        // Confirm deletion
+        if (confirm("Are you sure you want to delete this conversation?")) {
+            // Delete from storage
+            await StorageUtils.deleteChatFromHistory(sessionId);
+
+            // Reload chat history
+            await loadChatHistory();
+
+            // Update filtered history
+            if (currentSearchTerm) {
+                filteredHistory = await StorageUtils.searchChatHistory(
+                    currentSearchTerm
+                );
+            } else {
+                filteredHistory = [...chatHistory];
+            }
+
+            // Recalculate total pages
+            totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+
+            // Adjust current page if needed
+            if (currentPage > totalPages) {
+                currentPage = Math.max(1, totalPages);
+            }
+
+            // Display updated history
+            displayChatHistory();
+
+            // Update storage usage
+            await updateStorageUsage();
+        }
+    } catch (error) {
+        console.error("Error deleting chat session:", error);
+    }
+}
+
+/**
+ * Clear all chat history
+ */
+async function clearAllChatHistory() {
+    try {
+        // Clear from storage
+        await StorageUtils.clearChatHistory();
+
+        // Reload chat history
+        await loadChatHistory();
+
+        // Reset filtered history
+        filteredHistory = [];
+
+        // Reset pagination
+        currentPage = 1;
+        totalPages = 1;
+
+        // Display empty history
+        displayChatHistory();
+
+        // Update storage usage
+        await updateStorageUsage();
+    } catch (error) {
+        console.error("Error clearing chat history:", error);
+    }
+}
+
+/**
+ * Update storage usage information
+ */
+async function updateStorageUsage() {
+    try {
+        // Get storage usage
+        const usage = await StorageUtils.getStorageUsage();
+
+        // Update storage bar
+        storageUsage.style.width = `${usage.percentUsed * 100}%`;
+
+        // Update storage text
+        storageText.textContent = `Storage: ${usage.formattedUsed} / ${usage.formattedTotal}`;
+
+        // Add warning class if near limit
+        if (usage.percentUsed >= 0.9) {
+            storageUsage.classList.add("danger");
+        } else if (usage.percentUsed >= 0.7) {
+            storageUsage.classList.add("warning");
+            storageUsage.classList.remove("danger");
+        } else {
+            storageUsage.classList.remove("warning", "danger");
+        }
+
+        // Show warning if near limit
+        if (usage.isNearLimit) {
+            addSystemMessage(
+                "Warning: Storage space is running low. Consider deleting some chat history."
+            );
+        }
+    } catch (error) {
+        console.error("Error updating storage usage:", error);
     }
 }
 
