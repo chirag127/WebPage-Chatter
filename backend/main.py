@@ -5,15 +5,15 @@ from app.api.routes import router as api_router
 from app.core.config import settings
 
 app = FastAPI(
-    title="WebPage Chatter API",
-    description="Backend API for WebPage Chatter browser extension",
-    version="1.0.0",
+    title=settings.API_TITLE,
+    description=settings.API_DESCRIPTION,
+    version=settings.API_VERSION,
 )
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (browser extensions)
+    allow_origins=settings.CORS_ORIGINS,  # Use CORS origins from settings
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -28,4 +28,9 @@ async def root():
     return {"message": "Welcome to WebPage Chatter API", "status": "active"}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG
+    )
