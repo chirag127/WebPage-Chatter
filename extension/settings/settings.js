@@ -1,7 +1,9 @@
 // WebPage Chatter - Settings Script
 
-// Import configuration
+// Import configuration and utilities
 import { Config } from "../utils/config.js";
+import { StorageUtils } from "../utils/storage.js";
+import { TTSUtils } from "../utils/tts.js";
 
 // DOM Elements
 const apiKeyInput = document.getElementById("api-key");
@@ -35,46 +37,73 @@ document.addEventListener("DOMContentLoaded", async () => {
  */
 async function loadSettings() {
     try {
+        // Attempt to get settings from storage
         const settings = await StorageUtils.getSettings();
 
+        // Apply settings with fallbacks to defaults
+        applySettings(settings);
+
+        console.log("Settings loaded successfully");
+    } catch (error) {
+        console.error("Error loading settings:", error);
+        showError(`Failed to load settings: ${error.message}. Using defaults.`);
+
+        // Apply default settings as fallback
+        applyDefaultSettings();
+    }
+}
+
+/**
+ * Apply settings to the UI with proper fallbacks
+ * @param {Object} settings - The settings object
+ */
+function applySettings(settings) {
+    try {
         // Set API key if available
-        if (settings.apiKey) {
+        if (settings && settings.apiKey) {
             apiKeyInput.value = settings.apiKey;
         }
 
-        // Set API endpoint if available
-        if (settings.apiEndpoint) {
-            apiEndpointInput.value = settings.apiEndpoint;
-        } else {
-            apiEndpointInput.value = Config.API.DEFAULT_ENDPOINT;
-        }
+        // Set API endpoint with fallback
+        apiEndpointInput.value =
+            settings && settings.apiEndpoint
+                ? settings.apiEndpoint
+                : Config.API.DEFAULT_ENDPOINT;
 
-        // Set request timeout if available
-        if (settings.requestTimeout) {
-            requestTimeoutInput.value = Math.floor(
-                settings.requestTimeout / 1000
-            ); // Convert from ms to seconds
-        } else {
-            requestTimeoutInput.value = Math.floor(
-                Config.API.DEFAULT_TIMEOUT / 1000
-            ); // Convert from ms to seconds
-        }
+        // Set request timeout with fallback
+        const timeoutInSeconds =
+            settings && settings.requestTimeout
+                ? Math.floor(settings.requestTimeout / 1000)
+                : Math.floor(Config.API.DEFAULT_TIMEOUT / 1000);
+        requestTimeoutInput.value = timeoutInSeconds;
 
-        // Set TTS speed if available
-        if (settings.ttsSpeed) {
+        // Set TTS speed with fallback
+        if (settings && settings.ttsSpeed) {
             ttsSpeedSelect.value = settings.ttsSpeed;
+        } else {
+            ttsSpeedSelect.value = Config.TTS.DEFAULT_SPEED;
         }
 
-        // Set TTS voice if available
-        if (settings.ttsVoiceURI) {
-            // Voice selection will be handled after voices are loaded
-            // We'll store this for later
+        // Store TTS voice selection for later (will be applied after voices are loaded)
+        if (settings && settings.ttsVoiceURI) {
             ttsVoiceSelect.dataset.selectedVoice = settings.ttsVoiceURI;
         }
     } catch (error) {
-        console.error("Error loading settings:", error);
-        showError("Failed to load settings. Please try again.");
+        console.error("Error applying settings:", error);
+        // Fall back to defaults if there's an error applying settings
+        applyDefaultSettings();
     }
+}
+
+/**
+ * Apply default settings as fallback
+ */
+function applyDefaultSettings() {
+    apiKeyInput.value = "";
+    apiEndpointInput.value = Config.API.DEFAULT_ENDPOINT;
+    requestTimeoutInput.value = Math.floor(Config.API.DEFAULT_TIMEOUT / 1000);
+    ttsSpeedSelect.value = Config.TTS.DEFAULT_SPEED;
+    // Voice will be selected after voices are loaded
 }
 
 /**
@@ -82,11 +111,26 @@ async function loadSettings() {
  */
 async function loadVoices() {
     try {
-        // Get available voices
-        const voices = await TTSUtils.getVoices();
+        // Get available voices with timeout to prevent hanging
+        const voicesPromise = TTSUtils.getVoices();
+
+        // Set a timeout for voice loading (5 seconds)
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(
+                () => reject(new Error("Voice loading timed out")),
+                5000
+            );
+        });
+
+        // Race between voice loading and timeout
+        const voices = await Promise.race([voicesPromise, timeoutPromise]);
 
         // Clear loading option
         ttsVoiceSelect.innerHTML = "";
+
+        if (!voices || voices.length === 0) {
+            throw new Error("No voices available from speech synthesis");
+        }
 
         // Add voices to select
         voices.forEach((voice) => {
@@ -96,19 +140,33 @@ async function loadVoices() {
             ttsVoiceSelect.appendChild(option);
         });
 
-        // Set selected voice if available
+        // Set selected voice if available in storage
         if (ttsVoiceSelect.dataset.selectedVoice) {
-            ttsVoiceSelect.value = ttsVoiceSelect.dataset.selectedVoice;
-        }
+            // Check if the stored voice is still available
+            const storedVoice = voices.find(
+                (v) => v.voiceURI === ttsVoiceSelect.dataset.selectedVoice
+            );
 
-        // If no voice is selected, select the first one
-        if (!ttsVoiceSelect.value && voices.length > 0) {
+            if (storedVoice) {
+                ttsVoiceSelect.value = ttsVoiceSelect.dataset.selectedVoice;
+            } else {
+                // If stored voice is no longer available, select the first one
+                ttsVoiceSelect.value = voices[0].voiceURI;
+                console.warn("Stored voice no longer available, using default");
+            }
+        } else if (voices.length > 0) {
+            // If no voice was previously selected, select the first one
             ttsVoiceSelect.value = voices[0].voiceURI;
         }
+
+        console.log(`Loaded ${voices.length} TTS voices`);
     } catch (error) {
         console.error("Error loading voices:", error);
         ttsVoiceSelect.innerHTML =
             '<option value="">No voices available</option>';
+        showError(
+            "Failed to load TTS voices. Text-to-speech may not work properly."
+        );
     }
 }
 

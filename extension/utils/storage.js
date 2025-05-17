@@ -27,27 +27,55 @@ const StorageUtils = {
      * @returns {Promise<Object>} - The settings object
      */
     getSettings: async function () {
-        return new Promise((resolve) => {
-            chrome.storage.sync.get(
-                [
-                    "apiKey",
-                    "apiEndpoint",
-                    "requestTimeout",
-                    "ttsSpeed",
-                    "ttsVoiceURI",
-                ],
-                (result) => {
-                    resolve({
-                        apiKey: result.apiKey || "",
-                        apiEndpoint:
-                            result.apiEndpoint || Config.API.DEFAULT_ENDPOINT,
-                        requestTimeout:
-                            result.requestTimeout || Config.API.DEFAULT_TIMEOUT,
-                        ttsSpeed: result.ttsSpeed || Config.TTS.DEFAULT_SPEED,
-                        ttsVoiceURI: result.ttsVoiceURI || "",
-                    });
-                }
-            );
+        return new Promise((resolve, reject) => {
+            try {
+                chrome.storage.sync.get(
+                    [
+                        "apiKey",
+                        "apiEndpoint",
+                        "requestTimeout",
+                        "ttsSpeed",
+                        "ttsVoiceURI",
+                    ],
+                    (result) => {
+                        // Check for chrome runtime errors
+                        if (chrome.runtime.lastError) {
+                            console.error(
+                                "Chrome storage error:",
+                                chrome.runtime.lastError
+                            );
+                            reject(
+                                new Error(
+                                    `Storage error: ${chrome.runtime.lastError.message}`
+                                )
+                            );
+                            return;
+                        }
+
+                        // Create settings object with fallbacks to defaults
+                        const settings = {
+                            apiKey: result.apiKey || "",
+                            apiEndpoint:
+                                result.apiEndpoint ||
+                                Config.API.DEFAULT_ENDPOINT,
+                            requestTimeout:
+                                result.requestTimeout ||
+                                Config.API.DEFAULT_TIMEOUT,
+                            ttsSpeed:
+                                result.ttsSpeed || Config.TTS.DEFAULT_SPEED,
+                            ttsVoiceURI: result.ttsVoiceURI || "",
+                        };
+
+                        // Log successful settings retrieval
+                        console.log("Settings retrieved from storage");
+
+                        resolve(settings);
+                    }
+                );
+            } catch (error) {
+                console.error("Error in getSettings:", error);
+                reject(error);
+            }
         });
     },
 
@@ -57,8 +85,48 @@ const StorageUtils = {
      * @returns {Promise<void>}
      */
     saveSettings: async function (settings) {
-        return new Promise((resolve) => {
-            chrome.storage.sync.set(settings, resolve);
+        return new Promise((resolve, reject) => {
+            try {
+                // Validate settings object
+                if (!settings || typeof settings !== "object") {
+                    reject(new Error("Invalid settings object"));
+                    return;
+                }
+
+                // Ensure settings has expected properties with fallbacks
+                const validatedSettings = {
+                    apiKey: settings.apiKey || "",
+                    apiEndpoint:
+                        settings.apiEndpoint || Config.API.DEFAULT_ENDPOINT,
+                    requestTimeout:
+                        settings.requestTimeout || Config.API.DEFAULT_TIMEOUT,
+                    ttsSpeed: settings.ttsSpeed || Config.TTS.DEFAULT_SPEED,
+                    ttsVoiceURI: settings.ttsVoiceURI || "",
+                };
+
+                // Save to chrome.storage.sync
+                chrome.storage.sync.set(validatedSettings, () => {
+                    // Check for chrome runtime errors
+                    if (chrome.runtime.lastError) {
+                        console.error(
+                            "Chrome storage error:",
+                            chrome.runtime.lastError
+                        );
+                        reject(
+                            new Error(
+                                `Storage error: ${chrome.runtime.lastError.message}`
+                            )
+                        );
+                        return;
+                    }
+
+                    console.log("Settings saved successfully");
+                    resolve();
+                });
+            } catch (error) {
+                console.error("Error in saveSettings:", error);
+                reject(error);
+            }
         });
     },
 
