@@ -5,6 +5,16 @@ All notable changes to the WebPage Chatter project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-05-21
+
+### Added
+
+-   Added "Load Chat" button to each chat history entry
+-   Implemented functionality to load historical chats into the current chat interface
+-   Added visual indicator when a historical chat is loaded
+-   Added "New Chat" button to easily start a fresh chat after loading a historical one
+-   Enhanced error handling for chat loading operations
+
 ## [1.3.1] - 2025-05-20
 
 ### Fixed

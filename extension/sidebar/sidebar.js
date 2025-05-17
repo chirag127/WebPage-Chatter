@@ -975,6 +975,17 @@ function createHistoryItem(session) {
     const actionsElement = document.createElement("div");
     actionsElement.className = "history-item-actions";
 
+    // Create load chat button
+    const loadButton = document.createElement("button");
+    loadButton.className = "icon-button load-button";
+    loadButton.title = "Load Chat";
+    loadButton.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
+    loadButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        loadHistoricalChat(session);
+    });
+
     // Create delete button
     const deleteButton = document.createElement("button");
     deleteButton.className = "icon-button";
@@ -986,6 +997,7 @@ function createHistoryItem(session) {
         deleteChatSession(session.id);
     });
 
+    actionsElement.appendChild(loadButton);
     actionsElement.appendChild(deleteButton);
 
     // Add elements to header
@@ -1140,6 +1152,96 @@ async function clearAllChatHistory() {
         await updateStorageUsage();
     } catch (error) {
         console.error("Error clearing chat history:", error);
+    }
+}
+
+/**
+ * Load a historical chat session into the current chat interface
+ * @param {Object} session - The historical chat session to load
+ */
+async function loadHistoricalChat(session) {
+    try {
+        // Close the history modal
+        chatHistoryModal.classList.add("hidden");
+
+        // Clear current chat messages
+        chatMessages.innerHTML = "";
+
+        // Create a deep copy of the session to avoid reference issues
+        const sessionCopy = JSON.parse(JSON.stringify(session));
+
+        // Update current chat session
+        currentChatSession = sessionCopy;
+
+        // Add system message indicating loaded chat
+        addSystemMessage(
+            `Loaded chat from ${new Date(session.timestamp).toLocaleString()}`
+        );
+
+        // Recreate all messages in the UI
+        session.messages.forEach((message) => {
+            if (message.role === "user") {
+                addUserMessage(message.content);
+            } else if (message.role === "assistant") {
+                // Store the current assistant message for potential saving
+                currentAssistantMessage = message.content;
+                addAssistantMessage(message.content);
+            }
+        });
+
+        // Add a visual indicator that this is a loaded chat
+        const chatHeader = document.createElement("div");
+        chatHeader.className = "loaded-chat-indicator";
+
+        // Create the header content with icon and text
+        const headerContent = document.createElement("div");
+        headerContent.className = "loaded-chat-header-content";
+        headerContent.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Historical Chat from ${new Date(
+                session.timestamp
+            ).toLocaleDateString()}</span>
+        `;
+
+        // Create a "New Chat" button to start a fresh chat
+        const newChatButton = document.createElement("button");
+        newChatButton.className = "button secondary small-button";
+        newChatButton.textContent = "New Chat";
+        newChatButton.addEventListener("click", () => {
+            // Create a new chat session
+            currentChatSession = {
+                id: generateUUID(),
+                timestamp: new Date().toISOString(),
+                pageUrl: currentChatSession.pageUrl,
+                pageTitle: currentChatSession.pageTitle,
+                messages: [],
+            };
+
+            // Clear the chat interface
+            chatMessages.innerHTML = "";
+
+            // Add a system message
+            addSystemMessage("Started a new chat session");
+
+            // Reset current assistant message
+            currentAssistantMessage = "";
+        });
+
+        // Add elements to the header
+        chatHeader.appendChild(headerContent);
+        chatHeader.appendChild(newChatButton);
+
+        // Add the header to the chat interface
+        chatMessages.prepend(chatHeader);
+
+        console.log(`Loaded historical chat session: ${session.id}`);
+    } catch (error) {
+        console.error("Error loading historical chat:", error);
+        addSystemMessage("Failed to load historical chat. Please try again.");
     }
 }
 
