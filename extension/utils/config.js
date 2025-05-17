@@ -51,9 +51,4 @@ const Config = {
 };
 
 // Export the configuration object
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = Config;
-}
-else {
-    window.Config = Config;
-}
+export { Config };
