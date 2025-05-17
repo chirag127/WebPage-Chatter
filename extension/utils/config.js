@@ -3,11 +3,11 @@
 /**
  * Application-wide configuration constants
  */
-const Config = Object.freeze({
+const Config = {
     /**
      * API configuration
      */
-    API: Object.freeze({
+    API: {
         /**
          * Default API endpoint URL
          */
@@ -17,12 +17,12 @@ const Config = Object.freeze({
          * Default request timeout in milliseconds
          */
         DEFAULT_TIMEOUT: 120000, // 120 seconds
-    }),
+    },
 
     /**
      * Storage configuration
      */
-    STORAGE: Object.freeze({
+    STORAGE: {
         /**
          * Local storage limit in bytes (5MB)
          */
@@ -37,18 +37,23 @@ const Config = Object.freeze({
          * Storage warning threshold (80% of capacity)
          */
         WARNING_THRESHOLD: 0.8,
-    }),
+    },
 
     /**
      * Text-to-Speech configuration
      */
-    TTS: Object.freeze({
+    TTS: {
         /**
          * Default TTS speed
          */
         DEFAULT_SPEED: 1.0,
-    }),
-});
+    },
+};
 
 // Export the configuration object
-export { Config };
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Config;
+}
+else {
+    window.Config = Config;
+}
