@@ -48,6 +48,23 @@ const Config = {
          */
         DEFAULT_SPEED: 1.0,
     },
+
+    /**
+     * Navigation event handling configuration
+     */
+    NAVIGATION: {
+        /**
+         * Debounce time for navigation events in milliseconds
+         * This prevents excessive refreshes when multiple events fire in quick succession
+         */
+        DEBOUNCE_TIME: 500,
+
+        /**
+         * Refresh indicator display time in milliseconds
+         * How long to show the refresh indicator when context is updated
+         */
+        REFRESH_INDICATOR_TIME: 2000,
+    },
 };
 
 // Export the configuration object

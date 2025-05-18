@@ -72,6 +72,44 @@
                 </button>
             </div>
 
+            <div id="webpage-info" class="webpage-info">
+                <div class="webpage-info-content">
+                    <div class="webpage-title" id="webpage-title">
+                        Loading page title...
+                    </div>
+                    <div class="webpage-url" id="webpage-url">
+                        Loading URL...
+                    </div>
+                </div>
+                <div class="webpage-info-actions">
+                    <button
+                        id="manual-refresh-button"
+                        class="icon-button"
+                        title="Refresh page context"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path
+                                d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"
+                            />
+                        </svg>
+                    </button>
+                </div>
+                <div id="refresh-indicator" class="refresh-indicator hidden">
+                    <div class="refresh-spinner"></div>
+                    <span>Refreshing context...</span>
+                </div>
+            </div>
+
             <main class="chat-container">
                 <div id="chat-messages" class="chat-messages"></div>
 

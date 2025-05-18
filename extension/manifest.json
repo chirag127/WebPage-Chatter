@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WebPage Chatter",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "description": "Chat with any webpage using Gemini AI",
   "author": "Chirag Singhal",
   "icons": {
@@ -40,7 +40,8 @@
     "contextMenus",
     "activeTab",
     "scripting",
-    "sidePanel"
+    "sidePanel",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"

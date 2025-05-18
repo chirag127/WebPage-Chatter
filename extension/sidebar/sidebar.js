@@ -41,6 +41,12 @@ const savedAnswersList = document.getElementById("saved-answers-list");
 const closeModal = document.getElementById("close-modal");
 const loadingIndicator = document.getElementById("loading-indicator");
 
+// Webpage info elements
+const webpageTitle = document.getElementById("webpage-title");
+const webpageUrl = document.getElementById("webpage-url");
+const refreshIndicator = document.getElementById("refresh-indicator");
+const manualRefreshButton = document.getElementById("manual-refresh-button");
+
 // Chat History Elements
 const chatHistoryModal = document.getElementById("chat-history-modal");
 const closeHistoryModal = document.getElementById("close-history-modal");
@@ -98,7 +104,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Set up event listeners
     setupEventListeners();
+
+    // Set up message listener for context refresh events
+    setupMessageListeners();
 });
+
+/**
+ * Set up message listeners for background script communication
+ */
+function setupMessageListeners() {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        switch (message.action) {
+            case "refreshContext":
+                // Handle context refresh request
+                extractPageContent(true, message.reason)
+                    .then(() => {
+                        sendResponse({ success: true });
+                    })
+                    .catch((error) => {
+                        console.error("Error refreshing context:", error);
+                        sendResponse({
+                            success: false,
+                            error: error.message || "Failed to refresh context",
+                        });
+                    });
+                return true; // Keep the message channel open for async response
+        }
+    });
+}
 
 /**
  * Set up event listeners for UI elements
@@ -225,6 +258,12 @@ function setupEventListeners() {
         await StorageUtils.saveSettings({ ttsSpeed: speed });
     });
 
+    // Manual refresh button click
+    manualRefreshButton.addEventListener("click", async () => {
+        console.log("Manual refresh button clicked");
+        await extractPageContent(true, "manual_refresh");
+    });
+
     // Save answer button click
     saveAnswer.addEventListener("click", saveCurrentAnswer);
 
@@ -246,10 +285,17 @@ function setupEventListeners() {
 
 /**
  * Extract content from the current webpage
+ * @param {boolean} isRefresh - Whether this is a refresh of the context
+ * @param {string} reason - The reason for the refresh (if applicable)
  */
-async function extractPageContent() {
+async function extractPageContent(isRefresh = false, reason = "") {
     try {
-        loadingIndicator.classList.remove("hidden");
+        if (isRefresh) {
+            // Show refresh indicator
+            refreshIndicator.classList.remove("hidden");
+        } else {
+            loadingIndicator.classList.remove("hidden");
+        }
 
         // Request page content from content script
         const response = await chrome.runtime.sendMessage({
@@ -266,6 +312,25 @@ async function extractPageContent() {
 
             currentChatSession.pageUrl = url;
             currentChatSession.pageTitle = title;
+
+            // Update webpage info display
+            updateWebpageInfo(title, url);
+
+            // Add system message if this is a refresh
+            if (isRefresh) {
+                let refreshMessage;
+                if (reason === "tab_switch") {
+                    refreshMessage =
+                        "Context updated: Switched to a different tab.";
+                } else if (reason === "manual_refresh") {
+                    refreshMessage =
+                        "Context updated: Manually refreshed by user.";
+                } else {
+                    refreshMessage =
+                        "Context updated: Page content has changed.";
+                }
+                addSystemMessage(refreshMessage);
+            }
         } else {
             console.error("Failed to extract page content:", response.error);
             addSystemMessage(
@@ -277,7 +342,28 @@ async function extractPageContent() {
         addSystemMessage("An error occurred while extracting page content.");
     } finally {
         loadingIndicator.classList.add("hidden");
+
+        if (isRefresh) {
+            // Hide refresh indicator after a delay
+            setTimeout(() => {
+                refreshIndicator.classList.add("hidden");
+            }, Config.NAVIGATION.REFRESH_INDICATOR_TIME);
+        }
     }
+}
+
+/**
+ * Update the webpage info display
+ * @param {string} title - The webpage title
+ * @param {string} url - The webpage URL
+ */
+function updateWebpageInfo(title, url) {
+    webpageTitle.textContent = title || "Untitled Page";
+    webpageUrl.textContent = url || "No URL available";
+
+    // Set title attribute for tooltip on hover
+    webpageTitle.title = title || "Untitled Page";
+    webpageUrl.title = url || "No URL available";
 }
 
 /**
@@ -637,9 +723,21 @@ function addAssistantMessage(message) {
         '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
 
     // Add click event to TTS button
-    ttsButton.addEventListener("click", () => {
+    ttsButton.addEventListener("click", async () => {
         // Get the message text
         const messageText = contentElement.textContent || "";
+
+        // Get current TTS settings
+        const settings = await StorageUtils.getSettings();
+
+        // Apply TTS settings
+        if (settings.ttsSpeed) {
+            TTSUtils.setRate(parseFloat(settings.ttsSpeed));
+        }
+
+        if (settings.ttsVoiceURI) {
+            await TTSUtils.setVoice(settings.ttsVoiceURI);
+        }
 
         // Set up TTS with the message text
         TTSUtils.setText(messageText);

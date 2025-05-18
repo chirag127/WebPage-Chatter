@@ -5,6 +5,35 @@ All notable changes to the WebPage Chatter project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-05-23
+
+### Added
+
+-   Added manual refresh button to the webpage info section for explicit context refreshing
+-   Improved text-to-speech functionality to consistently apply speed settings from user preferences
+-   Enhanced visual feedback when manually refreshing the context
+
+### Fixed
+
+-   Fixed issue where text-to-speech speed settings weren't consistently applied when clicking TTS buttons in responses
+
+## [1.5.0] - 2025-05-22
+
+### Added
+
+-   Added automatic context refresh when:
+    -   Switching between browser tabs
+    -   Refreshing the current webpage
+    -   Navigating to a new URL within the same tab
+-   Added webpage info display in the chat interface showing current URL and title
+-   Added visual indicator when context is being refreshed
+-   Added system messages to notify users when context has been updated
+
+### Changed
+
+-   Improved user experience by eliminating the need for manual refresh when navigating
+-   Enhanced the sidebar UI with a dedicated section for webpage information
+
 ## [1.4.0] - 2025-05-21
 
 ### Added
