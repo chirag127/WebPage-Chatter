@@ -665,8 +665,35 @@
 
 .loading-indicator p {
     margin-top: 16px;
+    margin-bottom: 12px;
     font-size: 16px;
     color: #333333;
+}
+
+.processing-timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background-color: rgba(33, 150, 243, 0.1);
+    border-radius: 16px;
+    color: #2196f3;
+    font-size: 14px;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
+}
+
+.timer-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 1.5s infinite;
+}
+
+#elapsed-time {
+    min-width: 30px;
+    text-align: left;
 }
 
 .streaming-indicator {

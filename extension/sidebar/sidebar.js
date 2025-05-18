@@ -40,6 +40,7 @@ const savedAnswersModal = document.getElementById("saved-answers-modal");
 const savedAnswersList = document.getElementById("saved-answers-list");
 const closeModal = document.getElementById("close-modal");
 const loadingIndicator = document.getElementById("loading-indicator");
+const elapsedTimeElement = document.getElementById("elapsed-time");
 
 // Webpage info elements
 const webpageTitle = document.getElementById("webpage-title");
@@ -71,6 +72,10 @@ let currentChatSession = {
 };
 let currentAssistantMessage = "";
 let isProcessing = false;
+
+// Timer variables
+let processingStartTime = 0;
+let processingTimerId = null;
 
 // Chat history state
 let chatHistory = [];
@@ -295,6 +300,8 @@ async function extractPageContent(isRefresh = false, reason = "") {
             refreshIndicator.classList.remove("hidden");
         } else {
             loadingIndicator.classList.remove("hidden");
+            // Start the processing timer
+            startProcessingTimer();
         }
 
         // Request page content from content script
@@ -341,9 +348,11 @@ async function extractPageContent(isRefresh = false, reason = "") {
         console.error("Error extracting page content:", error);
         addSystemMessage("An error occurred while extracting page content.");
     } finally {
-        loadingIndicator.classList.add("hidden");
-
-        if (isRefresh) {
+        if (!isRefresh) {
+            loadingIndicator.classList.add("hidden");
+            // Stop the processing timer
+            stopProcessingTimer();
+        } else {
             // Hide refresh indicator after a delay
             setTimeout(() => {
                 refreshIndicator.classList.add("hidden");
@@ -385,6 +394,8 @@ async function handleSendMessage() {
 
     isProcessing = true;
     loadingIndicator.classList.remove("hidden");
+    // Start the processing timer
+    startProcessingTimer();
 
     // Clear input
     chatInput.value = "";
@@ -502,6 +513,8 @@ async function handleSendMessage() {
     } finally {
         isProcessing = false;
         loadingIndicator.classList.add("hidden");
+        // Stop the processing timer
+        stopProcessingTimer();
     }
 }
 
@@ -1391,4 +1404,36 @@ function generateUUID() {
             return v.toString(16);
         }
     );
+}
+
+/**
+ * Start the processing timer
+ */
+function startProcessingTimer() {
+    // Reset timer variables
+    processingStartTime = Date.now();
+    elapsedTimeElement.textContent = "0s";
+
+    // Clear any existing timer
+    if (processingTimerId) {
+        clearInterval(processingTimerId);
+    }
+
+    // Start a new timer that updates every second
+    processingTimerId = setInterval(() => {
+        const elapsedSeconds = Math.floor(
+            (Date.now() - processingStartTime) / 1000
+        );
+        elapsedTimeElement.textContent = `${elapsedSeconds}s`;
+    }, 1000);
+}
+
+/**
+ * Stop the processing timer
+ */
+function stopProcessingTimer() {
+    if (processingTimerId) {
+        clearInterval(processingTimerId);
+        processingTimerId = null;
+    }
 }
