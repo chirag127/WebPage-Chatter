@@ -41,6 +41,7 @@ const savedAnswersList = document.getElementById("saved-answers-list");
 const closeModal = document.getElementById("close-modal");
 const loadingIndicator = document.getElementById("loading-indicator");
 const elapsedTimeElement = document.getElementById("elapsed-time");
+const cancelRequestButton = document.getElementById("cancel-request");
 
 // Suggested Questions Elements
 const suggestedQuestionsContainer = document.getElementById(
@@ -87,6 +88,7 @@ let currentChatSession = {
 };
 let currentAssistantMessage = "";
 let isProcessing = false;
+let currentRequestId = null;
 
 // Timer variables
 let processingStartTime = 0;
@@ -288,6 +290,28 @@ function setupEventListeners() {
         await extractPageContent(true, "manual_refresh");
     });
 
+    // Cancel request button click
+    cancelRequestButton.addEventListener("click", () => {
+        console.log("Cancel request button clicked");
+        if (isProcessing && currentRequestId) {
+            // Send cancel request to background script
+            chrome.runtime.sendMessage(
+                {
+                    action: "cancelRequest",
+                    requestId: currentRequestId,
+                },
+                (response) => {
+                    if (response && response.success) {
+                        console.log("Request cancelled successfully");
+                        // The request will be cleaned up in the API response handler
+                    } else {
+                        console.error("Failed to cancel request");
+                    }
+                }
+            );
+        }
+    });
+
     // Save answer button click
     saveAnswer.addEventListener("click", saveCurrentAnswer);
 
@@ -311,17 +335,7 @@ function setupEventListeners() {
         fetchSuggestedQuestions(true); // Force refresh
     });
 
-    // Add click event listeners for suggested questions
-    suggestedQuestionsList.addEventListener("click", (event) => {
-        const questionElement = event.target.closest(".suggested-question");
-        if (questionElement) {
-            const question = questionElement.textContent;
-            chatInput.value = question;
-            handleSendMessage();
-        }
-    });
-
-    // Add click event listeners for suggested questions
+    // Add click event listener for suggested questions
     suggestedQuestionsList.addEventListener("click", (event) => {
         const questionElement = event.target.closest(".suggested-question");
         if (questionElement) {
@@ -461,6 +475,9 @@ async function handleSendMessage() {
     });
 
     try {
+        // Generate a unique request ID for this chat request
+        currentRequestId = `chat_${generateUUID()}`;
+
         // Prepare request data
         const requestData = {
             api_key: settings.apiKey,
@@ -472,6 +489,7 @@ async function handleSendMessage() {
         const response = await chrome.runtime.sendMessage({
             action: "sendChatRequest",
             data: requestData,
+            requestId: currentRequestId,
         });
 
         if (response.success) {
@@ -552,6 +570,21 @@ async function handleSendMessage() {
 
                 // Automatically save chat session to history
                 await saveChatSessionToHistory();
+
+                // Regenerate suggested questions based on the conversation context
+                // Only do this if we have at least one user-assistant exchange
+                if (currentChatSession.messages.length >= 2) {
+                    try {
+                        // Regenerate suggested questions with conversation context
+                        await fetchSuggestedQuestions(true, true);
+                    } catch (suggestionError) {
+                        console.error(
+                            "Error regenerating suggested questions:",
+                            suggestionError
+                        );
+                        // Don't show an error message to the user, just log it
+                    }
+                }
             }
         } else {
             console.error("Chat request failed:", response.error);
@@ -565,6 +598,8 @@ async function handleSendMessage() {
         loadingIndicator.classList.add("hidden");
         // Stop the processing timer
         stopProcessingTimer();
+        // Clear the current request ID
+        currentRequestId = null;
     }
 }
 
@@ -1489,10 +1524,14 @@ function stopProcessingTimer() {
 }
 
 /**
- * Fetch suggested questions based on the webpage content
+ * Fetch suggested questions based on the webpage content and conversation history
  * @param {boolean} forceRefresh - Whether to force a refresh of suggestions
+ * @param {boolean} useConversationContext - Whether to use conversation history for context
  */
-async function fetchSuggestedQuestions(forceRefresh = false) {
+async function fetchSuggestedQuestions(
+    forceRefresh = false,
+    useConversationContext = false
+) {
     // Always show the container and display the "Summarize this page" button immediately
     suggestedQuestionsContainer.classList.remove("hidden");
 
@@ -1509,7 +1548,9 @@ async function fetchSuggestedQuestions(forceRefresh = false) {
     // Don't fetch if already fetching or if we already have suggestions and not forcing refresh
     if (
         isFetchingSuggestions ||
-        (suggestedQuestions.length > 0 && !forceRefresh)
+        (suggestedQuestions.length > 0 &&
+            !forceRefresh &&
+            !useConversationContext)
     ) {
         return;
     }
@@ -1543,21 +1584,34 @@ async function fetchSuggestedQuestions(forceRefresh = false) {
             suggestedQuestions = [];
         }
 
-        // Prepare request data
+        // Generate a unique request ID for this suggestions request
+        currentRequestId = `suggestions_${generateUUID()}`;
+
+        // Prepare request data with conversation history if needed
         const requestData = {
             api_key: settings.apiKey,
             webpage_content: pageContent,
             count: 3, // Request 3 suggested questions
+            use_conversation_context: useConversationContext,
+            conversation_history: useConversationContext
+                ? currentChatSession.messages
+                : [],
         };
 
         console.log("Sending request for suggested questions with data:", {
             api_key: "REDACTED",
             webpage_content_length: pageContent.length,
             count: requestData.count,
+            use_conversation_context: requestData.use_conversation_context,
+            conversation_history_length:
+                requestData.conversation_history.length,
         });
 
         // Send request to get suggested questions
-        const response = await APIUtils.getSuggestedQuestions(requestData);
+        const response = await APIUtils.getSuggestedQuestions(
+            requestData,
+            currentRequestId
+        );
 
         console.log("Received suggested questions response:", response);
 
@@ -1596,6 +1650,10 @@ async function fetchSuggestedQuestions(forceRefresh = false) {
     } finally {
         isFetchingSuggestions = false;
         suggestedQuestionsLoading.classList.add("hidden");
+        // Clear the current request ID if it's a suggestions request
+        if (currentRequestId && currentRequestId.startsWith("suggestions_")) {
+            currentRequestId = null;
+        }
     }
 }
 

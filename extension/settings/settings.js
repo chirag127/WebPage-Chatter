@@ -11,7 +11,7 @@ const apiKeyError = document.getElementById("api-key-error");
 const toggleApiKey = document.getElementById("toggle-api-key");
 const eyeIcon = document.getElementById("eye-icon");
 const eyeOffIcon = document.getElementById("eye-off-icon");
-const apiEndpointInput = document.getElementById("api-endpoint");
+const apiBaseUrlInput = document.getElementById("api-base-url");
 const requestTimeoutInput = document.getElementById("request-timeout");
 const ttsSpeedSelect = document.getElementById("tts-speed");
 const ttsVoiceSelect = document.getElementById("tts-voice");
@@ -64,11 +64,11 @@ function applySettings(settings) {
             apiKeyInput.value = settings.apiKey;
         }
 
-        // Set API endpoint with fallback
-        apiEndpointInput.value =
-            settings && settings.apiEndpoint
-                ? settings.apiEndpoint
-                : Config.API.DEFAULT_ENDPOINT;
+        // Set API base URL with fallback
+        apiBaseUrlInput.value =
+            settings && settings.apiBaseUrl
+                ? settings.apiBaseUrl
+                : Config.API.BASE_API_URL;
 
         // Set request timeout with fallback
         const timeoutInSeconds =
@@ -245,8 +245,10 @@ async function saveSettings() {
         }
 
         // Get other settings
-        const apiEndpoint =
-            apiEndpointInput.value.trim() || Config.API.DEFAULT_ENDPOINT;
+        const apiBaseUrl =
+            apiBaseUrlInput.value.trim() || Config.API.BASE_API_URL;
+        // Derive the API endpoint from the base URL
+        const apiEndpoint = `${apiBaseUrl}/api/chat`;
         const requestTimeout = parseInt(requestTimeoutInput.value, 10) * 1000; // Convert seconds to ms
         const ttsSpeed = parseFloat(ttsSpeedSelect.value);
         const ttsVoiceURI = ttsVoiceSelect.value;
@@ -254,6 +256,7 @@ async function saveSettings() {
         // Save settings
         await StorageUtils.saveSettings({
             apiKey,
+            apiBaseUrl,
             apiEndpoint,
             requestTimeout,
             ttsSpeed,

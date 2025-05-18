@@ -190,15 +190,24 @@ async def get_gemini_response_stream(user_api_key: str, model_name: str, input_t
         # Return a user-friendly error message
         yield user_message
 
-async def generate_question_suggestions(user_api_key: str, model_name: str, webpage_content: str, count: int = 5) -> List[str]:
+async def generate_question_suggestions(
+    user_api_key: str,
+    model_name: str,
+    webpage_content: str,
+    count: int = 5,
+    conversation_history: List[dict] = None,
+    use_conversation_context: bool = False
+) -> List[str]:
     """
-    Generate suggested questions based on webpage content.
+    Generate suggested questions based on webpage content and optionally conversation history.
 
     Args:
         user_api_key: The user's Gemini API key.
         model_name: The name of the Gemini model to use.
         webpage_content: The content of the webpage.
         count: Number of questions to generate (default: 5).
+        conversation_history: Previous messages in the conversation (optional).
+        use_conversation_context: Whether to use conversation history for context.
 
     Returns:
         List[str]: A list of suggested questions.
@@ -207,9 +216,19 @@ async def generate_question_suggestions(user_api_key: str, model_name: str, webp
         # Initialize Gemini client with user's API key
         client = genai.Client(api_key=user_api_key)
 
+        # Format conversation history if provided and enabled
+        conversation_context = ""
+        if use_conversation_context and conversation_history and len(conversation_history) > 0:
+            conversation_context = "CONVERSATION HISTORY:\n"
+            for message in conversation_history:
+                role = message.get("role", "").capitalize()
+                content = message.get("content", "")
+                conversation_context += f"{role}: {content}\n"
+            conversation_context += "\n"
+
         # Create a prompt for generating questions
         prompt = f"""
-        Based on the following webpage content, generate {count} relevant and diverse questions that a user might want to ask.
+        Based on the following webpage content{" and conversation history" if use_conversation_context and conversation_history else ""}, generate {count} relevant and diverse questions that a user might want to ask next.
 
         The questions should:
         1. Be directly related to the content of the webpage
@@ -217,12 +236,15 @@ async def generate_question_suggestions(user_api_key: str, model_name: str, webp
         3. Be clear, concise, and specific
         4. Avoid redundancy or overlap between questions
         5. Be phrased in natural, conversational language
+        {"6. Take into account the previous conversation and suggest follow-up questions" if use_conversation_context and conversation_history else ""}
+        {"7. Avoid repeating questions that have already been asked in the conversation history" if use_conversation_context and conversation_history else ""}
 
         Format your response as a JSON array of strings containing only the questions.
 
         WEBPAGE CONTENT:
         {webpage_content}
 
+        {conversation_context if use_conversation_context and conversation_history else ""}
         QUESTIONS:
         """
 

@@ -78,7 +78,9 @@ async def suggest_questions(request: SuggestQuestionsRequest):
         request.api_key,
         model_name,
         request.webpage_content,
-        request.count
+        request.count,
+        request.conversation_history,
+        request.use_conversation_context
     )
 
     # Return JSON response

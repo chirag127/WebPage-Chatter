@@ -9,18 +9,26 @@ const Config = {
      */
     API: {
         /**
-         * Default API endpoint URL
+         * Base API URL
          */
-        // DEFAULT_ENDPOINT: "https://webpage-chatter.onrender.com/api/chat",
-        DEFAULT_ENDPOINT: "http://localhost:8000/api/chat",
+        // BASE_API_URL: "https://webpage-chatter.onrender.com",
+        BASE_API_URL: "http://localhost:8000",
+
+        /**
+         * Default API endpoint URL for chat
+         * This is derived from the base URL by appending "/api/chat"
+         */
+        get DEFAULT_ENDPOINT() {
+            return `${this.BASE_API_URL}/api/chat`;
+        },
 
         /**
          * Default suggested questions endpoint URL
-         * This is derived from the chat endpoint by replacing /chat with /suggest-questions
-         * or by appending /suggest-questions to the base URL
+         * This is derived from the base URL by appending "/api/suggest-questions"
          */
-        DEFAULT_SUGGESTIONS_ENDPOINT:
-            "http://localhost:8000/api/suggest-questions",
+        get DEFAULT_SUGGESTIONS_ENDPOINT() {
+            return `${this.BASE_API_URL}/api/suggest-questions`;
+        },
 
         /**
          * Default request timeout in milliseconds

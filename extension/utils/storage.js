@@ -32,6 +32,7 @@ const StorageUtils = {
                 chrome.storage.sync.get(
                     [
                         "apiKey",
+                        "apiBaseUrl",
                         "apiEndpoint",
                         "requestTimeout",
                         "ttsSpeed",
@@ -55,6 +56,8 @@ const StorageUtils = {
                         // Create settings object with fallbacks to defaults
                         const settings = {
                             apiKey: result.apiKey || "",
+                            apiBaseUrl:
+                                result.apiBaseUrl || Config.API.BASE_API_URL,
                             apiEndpoint:
                                 result.apiEndpoint ||
                                 Config.API.DEFAULT_ENDPOINT,
@@ -96,6 +99,7 @@ const StorageUtils = {
                 // Ensure settings has expected properties with fallbacks
                 const validatedSettings = {
                     apiKey: settings.apiKey || "",
+                    apiBaseUrl: settings.apiBaseUrl || Config.API.BASE_API_URL,
                     apiEndpoint:
                         settings.apiEndpoint || Config.API.DEFAULT_ENDPOINT,
                     requestTimeout:

@@ -3,6 +3,9 @@
 // Import configuration
 import { Config } from "./config.js";
 
+// Store active request controllers for cancellation
+let activeRequestControllers = new Map();
+
 /**
  * Utility functions for API operations
  */
@@ -10,17 +13,34 @@ const APIUtils = {
     /**
      * Send a chat request to the backend API
      * @param {Object} data - The request data
+     * @param {string} requestId - Unique identifier for this request (for cancellation)
      * @returns {Promise<Object>} - The API response
      */
-    sendChatRequest: async function (data) {
+    sendChatRequest: async function (data, requestId = "default") {
         try {
-            // Send request to background script
-            return await chrome.runtime.sendMessage({
+            // Create a new AbortController for this request
+            const controller = new AbortController();
+
+            // Store the controller for potential cancellation
+            activeRequestControllers.set(requestId, controller);
+
+            // Send request to background script with the signal
+            const response = await chrome.runtime.sendMessage({
                 action: "sendChatRequest",
                 data: data,
+                requestId: requestId,
             });
+
+            // Remove the controller when done
+            activeRequestControllers.delete(requestId);
+
+            return response;
         } catch (error) {
             console.error("Error sending chat request:", error);
+
+            // Remove the controller when done
+            activeRequestControllers.delete(requestId);
+
             return {
                 success: false,
                 error: error.message || "Failed to send chat request",
@@ -29,19 +49,52 @@ const APIUtils = {
     },
 
     /**
+     * Cancel an active API request
+     * @param {string} requestId - The ID of the request to cancel
+     * @returns {boolean} - Whether a request was found and cancelled
+     */
+    cancelRequest: function (requestId = "default") {
+        const controller = activeRequestControllers.get(requestId);
+        if (controller) {
+            console.log(`Cancelling request: ${requestId}`);
+            controller.abort();
+            activeRequestControllers.delete(requestId);
+            return true;
+        }
+        return false;
+    },
+
+    /**
      * Get question suggestions based on webpage content
      * @param {Object} data - The request data (api_key, webpage_content, count)
+     * @param {string} requestId - Unique identifier for this request (for cancellation)
      * @returns {Promise<Object>} - The API response with suggested questions
      */
-    getSuggestedQuestions: async function (data) {
+    getSuggestedQuestions: async function (data, requestId = "suggestions") {
         try {
+            // Create a new AbortController for this request
+            const controller = new AbortController();
+
+            // Store the controller for potential cancellation
+            activeRequestControllers.set(requestId, controller);
+
             // Send request to background script
-            return await chrome.runtime.sendMessage({
+            const response = await chrome.runtime.sendMessage({
                 action: "getSuggestedQuestions",
                 data: data,
+                requestId: requestId,
             });
+
+            // Remove the controller when done
+            activeRequestControllers.delete(requestId);
+
+            return response;
         } catch (error) {
             console.error("Error getting suggested questions:", error);
+
+            // Remove the controller when done
+            activeRequestControllers.delete(requestId);
+
             return {
                 success: false,
                 error: error.message || "Failed to get suggested questions",

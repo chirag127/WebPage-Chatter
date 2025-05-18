@@ -1,0 +1,17 @@
+please add an setting in the extension options to set the default model to use from the
+Model variant	Input(s)	Output	Optimized for
+gemini-2.5-flash-preview-04-17	Audio, images, videos, and text	Text	Adaptive thinking, cost efficiency
+gemini-2.5-pro-preview-05-06	Audio, images, videos, and text	Text	Enhanced thinking and reasoning, multimodal understanding, advanced coding, and more
+gemini-2.0-flash	Audio, images, videos, and text	Text	Next generation features, speed.
+gemini-2.0-flash-preview-image-generation	Audio, images, videos, and text	Text, images	Conversational image generation and editing
+gemini-2.0-flash-lite	Audio, images, videos, and text	Text	Cost efficiency and low latency
+gemini-1.5-flash	Audio, images, videos, and text	Text	Fast and versatile performance across a diverse variety of tasks
+gemini-1.5-pro	Audio, images, videos, and text	Text	Complex reasoning tasks requiring more intelligence
+
+the model will be tried in the following order:
+gemini-2.5-pro-preview-05-06
+gemini-2.5-flash-preview-04-17
+gemini-2.0-flash
+gemini-2.0-flash-lite
+gemini-1.5-flash
+gemini-1.5-pro

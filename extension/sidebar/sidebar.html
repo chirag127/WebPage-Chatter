@@ -111,7 +111,57 @@
             </div>
 
             <main class="chat-container">
-                <div id="chat-messages" class="chat-messages"></div>
+                <div class="messages-and-suggestions-container">
+                    <div id="chat-messages" class="chat-messages"></div>
+
+                    <!-- Suggested Questions (moved above input field) -->
+                    <div
+                        id="suggested-questions-container"
+                        class="suggested-questions-container hidden"
+                    >
+                        <div class="suggested-questions-header">
+                            <div class="suggested-questions-title">
+                                Suggested Questions
+                            </div>
+                            <button
+                                id="refresh-suggestions"
+                                class="suggested-questions-refresh"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path
+                                        d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"
+                                    />
+                                </svg>
+                                Refresh
+                            </button>
+                        </div>
+                        <div
+                            id="suggested-questions-list"
+                            class="suggested-questions-list"
+                        ></div>
+                        <div
+                            id="suggested-questions-loading"
+                            class="suggested-questions-loading hidden"
+                        >
+                            <div class="suggested-questions-spinner"></div>
+                            <span>Generating suggestions...</span>
+                        </div>
+                        <div
+                            id="suggested-questions-error"
+                            class="suggested-questions-error hidden"
+                        ></div>
+                    </div>
+                </div>
 
                 <div class="chat-input-container">
                     <textarea
@@ -138,54 +188,6 @@
                             ></polygon>
                         </svg>
                     </button>
-                </div>
-
-                <!-- Suggested Questions -->
-                <div
-                    id="suggested-questions-container"
-                    class="suggested-questions-container hidden"
-                >
-                    <div class="suggested-questions-header">
-                        <div class="suggested-questions-title">
-                            Suggested Questions
-                        </div>
-                        <button
-                            id="refresh-suggestions"
-                            class="suggested-questions-refresh"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="12"
-                                height="12"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path
-                                    d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"
-                                />
-                            </svg>
-                            Refresh
-                        </button>
-                    </div>
-                    <div
-                        id="suggested-questions-list"
-                        class="suggested-questions-list"
-                    ></div>
-                    <div
-                        id="suggested-questions-loading"
-                        class="suggested-questions-loading hidden"
-                    >
-                        <div class="suggested-questions-spinner"></div>
-                        <span>Generating suggestions...</span>
-                    </div>
-                    <div
-                        id="suggested-questions-error"
-                        class="suggested-questions-error hidden"
-                    ></div>
                 </div>
             </main>
 
@@ -389,6 +391,24 @@
                     </div>
                     <span id="elapsed-time">0s</span>
                 </div>
+                <button id="cancel-request" class="cancel-request-button">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                    Cancel
+                </button>
             </div>
         </div>
 

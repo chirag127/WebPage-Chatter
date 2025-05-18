@@ -248,6 +248,9 @@ function notifySidebarOfContextChange(tabId, reason) {
     );
 }
 
+// Store active request controllers for cancellation
+const activeRequestControllers = new Map();
+
 // Listen for messages from content scripts or sidebar
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Handle different message types
@@ -316,17 +319,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         case "sendChatRequest":
             // Forward the chat request to the API
-            handleChatRequest(message.data)
+            handleChatRequest(message.data, message.requestId)
                 .then((response) => sendResponse(response))
                 .catch((error) => sendResponse({ error: error.message }));
             return true; // Keep the message channel open for async response
 
         case "getSuggestedQuestions":
             // Forward the suggested questions request to the API
-            handleSuggestedQuestionsRequest(message.data)
+            handleSuggestedQuestionsRequest(message.data, message.requestId)
                 .then((response) => sendResponse(response))
                 .catch((error) => sendResponse({ error: error.message }));
             return true; // Keep the message channel open for async response
+
+        case "cancelRequest":
+            // Cancel an active request
+            const cancelled = cancelRequest(message.requestId);
+            sendResponse({ success: cancelled });
+            break;
 
         case "validateApiKey":
             // Validate the API key format
@@ -342,11 +351,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 /**
+ * Cancel an active request
+ * @param {string} requestId - The ID of the request to cancel
+ * @returns {boolean} - Whether a request was found and cancelled
+ */
+function cancelRequest(requestId) {
+    const controller = activeRequestControllers.get(requestId);
+    if (controller) {
+        console.log(`Cancelling request: ${requestId}`);
+        controller.abort();
+        activeRequestControllers.delete(requestId);
+        return true;
+    }
+    return false;
+}
+
+/**
  * Handle chat request to the backend API
  * @param {Object} data - The chat request data
+ * @param {string} requestId - Unique identifier for this request (for cancellation)
  * @returns {Promise} - Promise that resolves with the API response
  */
-async function handleChatRequest(data) {
+async function handleChatRequest(data, requestId = "default") {
     try {
         // Get the API endpoint from settings or use default from Config
         const settings = await chrome.storage.sync.get([
@@ -360,6 +386,9 @@ async function handleChatRequest(data) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+        // Store the controller for potential cancellation
+        activeRequestControllers.set(requestId, controller);
+
         // Make the API request with timeout
         const response = await fetch(apiUrl, {
             method: "POST",
@@ -372,6 +401,9 @@ async function handleChatRequest(data) {
 
         // Clear the timeout
         clearTimeout(timeoutId);
+
+        // Remove the controller from the active controllers map
+        activeRequestControllers.delete(requestId);
 
         if (!response.ok) {
             let errorMessage = "Failed to get response from API";
@@ -402,12 +434,21 @@ async function handleChatRequest(data) {
     } catch (error) {
         console.error("API request error:", error);
 
+        // Remove the controller from the active controllers map
+        activeRequestControllers.delete(requestId);
+
         // Provide more specific error messages based on error type
         let errorMessage = error.message;
 
         if (error.name === "AbortError") {
-            errorMessage =
-                "Request timed out. The server took too long to respond.";
+            if (activeRequestControllers.has(requestId)) {
+                // This was a manual cancellation
+                errorMessage = "Request cancelled by user.";
+            } else {
+                // This was a timeout
+                errorMessage =
+                    "Request timed out. The server took too long to respond.";
+            }
         } else if (
             error.name === "TypeError" &&
             error.message.includes("Failed to fetch")
@@ -420,6 +461,9 @@ async function handleChatRequest(data) {
             success: false,
             error: errorMessage,
             errorType: error.name,
+            cancelled:
+                error.name === "AbortError" &&
+                !activeRequestControllers.has(requestId),
         };
     }
 }
@@ -445,9 +489,13 @@ function validateApiKey(apiKey) {
 /**
  * Handle suggested questions request to the backend API
  * @param {Object} data - The request data (api_key, webpage_content, count)
+ * @param {string} requestId - Unique identifier for this request (for cancellation)
  * @returns {Promise} - Promise that resolves with the API response
  */
-async function handleSuggestedQuestionsRequest(data) {
+async function handleSuggestedQuestionsRequest(
+    data,
+    requestId = "suggestions"
+) {
     try {
         // Get the API endpoint from settings or use default from Config
         const settings = await chrome.storage.sync.get([
@@ -456,9 +504,9 @@ async function handleSuggestedQuestionsRequest(data) {
         ]);
 
         // Construct the API URL for suggested questions
-        let apiUrl =
-            settings.suggestionsEndpoint ||
-            Config.API.DEFAULT_SUGGESTIONS_ENDPOINT;
+        let apiUrl = settings.apiEndpoint
+            ? settings.apiEndpoint.replace(/\/chat$/, "/suggest-questions")
+            : Config.API.DEFAULT_SUGGESTIONS_ENDPOINT;
 
         // If no specific suggestions endpoint is set, derive it from the chat endpoint
         if (!settings.suggestionsEndpoint) {
@@ -485,6 +533,9 @@ async function handleSuggestedQuestionsRequest(data) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+        // Store the controller for potential cancellation
+        activeRequestControllers.set(requestId, controller);
+
         // Make the API request with timeout
         const response = await fetch(apiUrl, {
             method: "POST",
@@ -497,6 +548,9 @@ async function handleSuggestedQuestionsRequest(data) {
 
         // Clear the timeout
         clearTimeout(timeoutId);
+
+        // Remove the controller from the active controllers map
+        activeRequestControllers.delete(requestId);
 
         if (!response.ok) {
             let errorMessage = "Failed to get response from API";
@@ -525,12 +579,21 @@ async function handleSuggestedQuestionsRequest(data) {
     } catch (error) {
         console.error("API request error for suggested questions:", error);
 
+        // Remove the controller from the active controllers map
+        activeRequestControllers.delete(requestId);
+
         // Provide more specific error messages based on error type
         let errorMessage = error.message;
 
         if (error.name === "AbortError") {
-            errorMessage =
-                "Request timed out. The server took too long to respond.";
+            if (activeRequestControllers.has(requestId)) {
+                // This was a manual cancellation
+                errorMessage = "Request cancelled by user.";
+            } else {
+                // This was a timeout
+                errorMessage =
+                    "Request timed out. The server took too long to respond.";
+            }
         } else if (
             error.name === "TypeError" &&
             error.message.includes("Failed to fetch")
@@ -543,6 +606,9 @@ async function handleSuggestedQuestionsRequest(data) {
             success: false,
             error: errorMessage,
             errorType: error.name,
+            cancelled:
+                error.name === "AbortError" &&
+                !activeRequestControllers.has(requestId),
         };
     }
 }
