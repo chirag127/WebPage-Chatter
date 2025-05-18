@@ -52,9 +52,12 @@ async def get_gemini_response(user_api_key: str, model_name: str, input_text_par
             ),
         ]
 
-        # Configure response generation with plain text
+        # Configure response generation with plain text and no thinking budget
         # Note: We'll still render as Markdown on the frontend
         generate_content_config = types.GenerateContentConfig(
+            thinking_config = types.ThinkingConfig(
+                thinking_budget=0,
+            ),
             response_mime_type="text/plain",
         )
 
@@ -121,8 +124,11 @@ async def get_gemini_response_stream(user_api_key: str, model_name: str, input_t
         ),
     ]
 
-    # Configure response generation with timeout
+    # Configure response generation with timeout and no thinking budget
     generate_content_config = types.GenerateContentConfig(
+        thinking_config = types.ThinkingConfig(
+            thinking_budget=0,
+        ),
         response_mime_type="text/plain",
     )
 
@@ -230,8 +236,11 @@ async def generate_question_suggestions(user_api_key: str, model_name: str, webp
             ),
         ]
 
-        # Configure response generation
+        # Configure response generation with no thinking budget
         generate_content_config = types.GenerateContentConfig(
+            thinking_config = types.ThinkingConfig(
+                thinking_budget=0,
+            ),
             response_mime_type="text/plain",
         )
 

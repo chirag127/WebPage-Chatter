@@ -1493,6 +1493,19 @@ function stopProcessingTimer() {
  * @param {boolean} forceRefresh - Whether to force a refresh of suggestions
  */
 async function fetchSuggestedQuestions(forceRefresh = false) {
+    // Always show the container and display the "Summarize this page" button immediately
+    suggestedQuestionsContainer.classList.remove("hidden");
+
+    // Display the "Summarize this page" button immediately
+    if (forceRefresh || suggestedQuestions.length === 0) {
+        // Clear the list and show just the "Summarize this page" button
+        suggestedQuestionsList.innerHTML = "";
+        const summarizeButton = document.createElement("button");
+        summarizeButton.className = "suggested-question";
+        summarizeButton.textContent = "Summarize this page";
+        suggestedQuestionsList.appendChild(summarizeButton);
+    }
+
     // Don't fetch if already fetching or if we already have suggestions and not forcing refresh
     if (
         isFetchingSuggestions ||
@@ -1525,9 +1538,8 @@ async function fetchSuggestedQuestions(forceRefresh = false) {
         suggestedQuestionsLoading.classList.remove("hidden");
         suggestedQuestionsError.classList.add("hidden");
 
-        // Clear existing questions if refreshing
+        // We already cleared and added the "Summarize this page" button above
         if (forceRefresh) {
-            suggestedQuestionsList.innerHTML = "";
             suggestedQuestions = [];
         }
 
@@ -1594,6 +1606,12 @@ async function fetchSuggestedQuestions(forceRefresh = false) {
 function displaySuggestedQuestions(questions) {
     // Clear the list
     suggestedQuestionsList.innerHTML = "";
+
+    // Always add "Summarize this page" as the first button
+    const summarizeButton = document.createElement("button");
+    summarizeButton.className = "suggested-question";
+    summarizeButton.textContent = "Summarize this page";
+    suggestedQuestionsList.appendChild(summarizeButton);
 
     // Add each question as a button
     questions.forEach((question) => {

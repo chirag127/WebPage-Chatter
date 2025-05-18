@@ -22,6 +22,9 @@ def generate():
         ),
     ]
     generate_content_config = types.GenerateContentConfig(
+        thinking_config = types.ThinkingConfig(
+            thinking_budget=0,
+        ),
         response_mime_type="text/plain",
     )
 
