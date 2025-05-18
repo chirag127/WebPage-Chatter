@@ -29,6 +29,27 @@ const APIUtils = {
     },
 
     /**
+     * Get question suggestions based on webpage content
+     * @param {Object} data - The request data (api_key, webpage_content, count)
+     * @returns {Promise<Object>} - The API response with suggested questions
+     */
+    getSuggestedQuestions: async function (data) {
+        try {
+            // Send request to background script
+            return await chrome.runtime.sendMessage({
+                action: "getSuggestedQuestions",
+                data: data,
+            });
+        } catch (error) {
+            console.error("Error getting suggested questions:", error);
+            return {
+                success: false,
+                error: error.message || "Failed to get suggested questions",
+            };
+        }
+    },
+
+    /**
      * Process a streaming response
      * @param {ReadableStreamDefaultReader} reader - The response reader
      * @param {Function} onChunk - Callback for each chunk of text

@@ -8,104 +8,123 @@ WebPage Chatter is a powerful browser extension that enables users to ask questi
 
 ## Features
 
-- **Chat with Any Webpage**: Ask questions about the content of any webpage you're viewing.
-- **Comprehensive Content Extraction**: Extracts text, metadata, URL, title, and image alt text from webpages.
-- **Gemini AI Integration**: Powered by Google's Gemini AI models for intelligent responses.
-- **Text-to-Speech**: Listen to AI responses with customizable voice and speed settings.
-- **Save Important Answers**: Save useful chat interactions for future reference.
-- **Multiple Activation Methods**: Open the sidebar via toolbar icon, context menu, or keyboard shortcut.
-- **User-Provided API Key**: Use your own Gemini API key for complete control over usage.
-- **Cross-Browser Compatibility**: Works on Chrome, Firefox, and Edge.
+-   **Chat with Any Webpage**: Ask questions about the content of any webpage you're viewing.
+-   **Comprehensive Content Extraction**: Extracts text, metadata, URL, title, and image alt text from webpages.
+-   **Gemini AI Integration**: Powered by Google's Gemini AI models for intelligent responses.
+-   **Text-to-Speech**: Listen to AI responses with customizable voice and speed settings.
+-   **Save Important Answers**: Save useful chat interactions for future reference.
+-   **Multiple Activation Methods**: Open the sidebar via toolbar icon, context menu, or keyboard shortcut.
+-   **User-Provided API Key**: Use your own Gemini API key for complete control over usage.
+-   **Cross-Browser Compatibility**: Works on Chrome, Firefox, and Edge.
 
 ## Installation
 
 ### Prerequisites
 
-- Node.js (v14 or higher)
-- npm (v6 or higher)
-- A Gemini API key from Google AI Studio
+-   Node.js (v14 or higher)
+-   npm (v6 or higher)
+-   A Gemini API key from Google AI Studio
 
 ### Backend Setup
 
 1. Clone the repository:
-   ```
-   git clone https://github.com/chirag127/WebPage-Chatter.git
-   cd WebPage-Chatter
-   ```
+
+    ```
+    git clone https://github.com/chirag127/WebPage-Chatter.git
+    cd WebPage-Chatter
+    ```
 
 2. Install backend dependencies:
-   ```
-   cd backend
-   pip install -r requirements.txt
-   ```
+
+    ```
+    cd backend
+    pip install -r requirements.txt
+    ```
 
 3. Run the backend server:
-   ```
-   uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-   ```
+    ```
+    uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ```
 
 ### Extension Setup
 
 1. Install extension dependencies and generate icons:
-   ```
-   cd extension
-   npm install --save-dev sharp
-   node ../scripts/generate-pngs.js
-   ```
+
+    ```
+    cd extension
+    npm install --save-dev sharp
+    node ../scripts/generate-pngs.js
+    ```
 
 2. Load the extension in your browser:
-   - **Chrome**:
-     - Go to `chrome://extensions/`
-     - Enable "Developer mode"
-     - Click "Load unpacked" and select the `extension` folder
 
-   - **Firefox**:
-     - Go to `about:debugging#/runtime/this-firefox`
-     - Click "Load Temporary Add-on" and select any file in the `extension` folder
+    - **Chrome**:
 
-   - **Edge**:
-     - Go to `edge://extensions/`
-     - Enable "Developer mode"
-     - Click "Load unpacked" and select the `extension` folder
+        - Go to `chrome://extensions/`
+        - Enable "Developer mode"
+        - Click "Load unpacked" and select the `extension` folder
+
+    - **Firefox**:
+
+        - Go to `about:debugging#/runtime/this-firefox`
+        - Click "Load Temporary Add-on" and select any file in the `extension` folder
+
+    - **Edge**:
+        - Go to `edge://extensions/`
+        - Enable "Developer mode"
+        - Click "Load unpacked" and select the `extension` folder
 
 3. Configure the extension:
-   - Click on the extension icon and go to Settings
-   - Enter your Gemini API key
-   - Adjust TTS settings as desired
+    - Click on the extension icon and go to Settings
+    - Enter your Gemini API key
+    - Adjust TTS settings as desired
 
 ## Usage
 
 1. Navigate to any webpage you want to chat about.
 2. Open the WebPage Chatter sidebar using one of these methods:
-   - Click the extension icon in the toolbar
-   - Right-click on the page and select "Chat with this page"
-   - Use the keyboard shortcut (Ctrl+Shift+C or Command+Shift+C on Mac)
+    - Click the extension icon in the toolbar
+    - Right-click on the page and select "Chat with this page"
+    - Use the keyboard shortcut (Ctrl+Shift+C or Command+Shift+C on Mac)
 3. Type your question in the input field and press Enter or click the send button.
 4. View the AI's response in the chat.
 5. Optionally:
-   - Use the TTS controls to have the response read aloud
-   - Save important answers for future reference
-   - Adjust TTS speed as needed
+    - Use the TTS controls to have the response read aloud
+    - Save important answers for future reference
+    - Adjust TTS speed as needed
 
 ## Project Structure
 
-- `extension/`: Contains all browser extension code
-  - `manifest.json`: Extension configuration
-  - `background/`: Background scripts
-  - `content/`: Content scripts for webpage interaction
-  - `sidebar/`: Sidebar UI for chat interface
-  - `settings/`: Settings page
-  - `utils/`: Utility functions
-  - `assets/`: Images and styles
-  - `icons/`: Extension icons
+-   `extension/`: Contains all browser extension code
 
-- `backend/`: Contains all backend FastAPI server code
-  - `main.py`: Application entry point
-  - `app/`: Application modules
-    - `api/`: API routes
-    - `core/`: Core functionality
-    - `services/`: Service modules
-    - `models/`: Data models
+    -   `manifest.json`: Extension configuration
+    -   `background/`: Background scripts
+    -   `content/`: Content scripts for webpage interaction
+    -   `sidebar/`: Sidebar UI for chat interface
+    -   `settings/`: Settings page
+    -   `utils/`: Utility functions
+    -   `assets/`: Images and styles
+    -   `icons/`: Extension icons
+
+-   `backend/`: Contains all backend FastAPI server code
+
+    -   `main.py`: Application entry point
+    -   `app/`: Application modules
+        -   `api/`: API routes
+        -   `core/`: Core functionality
+        -   `services/`: Service modules
+        -   `models/`: Data models
+
+-   `scripts/`: Contains utility scripts
+
+    -   `generate-pngs.js`: Script to generate PNG icons from SVG source
+    -   `generate-landing-page-icons.js`: Script to generate icons for the landing page
+
+-   `index.html` & `privacy-policy.html`: GitHub Pages website files
+
+## GitHub Pages Website
+
+Visit our [GitHub Pages website](https://chirag127.github.io/WebPage-Chatter) for more information about the extension and our privacy policy.
 
 ## Development
 
@@ -113,9 +132,9 @@ WebPage Chatter is a powerful browser extension that enables users to ask questi
 
 The backend is built with FastAPI and handles communication with the Gemini API. It provides endpoints for:
 
-- Processing chat requests
-- Streaming responses from Gemini
-- Health checks
+-   Processing chat requests
+-   Streaming responses from Gemini
+-   Health checks
 
 #### Gemini Integration
 
@@ -164,11 +183,11 @@ if __name__ == "__main__":
 
 The extension consists of several components:
 
-- **Background Script**: Handles extension activation and communication between components
-- **Content Script**: Extracts webpage content
-- **Sidebar UI**: Provides the chat interface
-- **Settings Page**: Allows configuration of API key and TTS settings
-- **Utility Modules**: Handle storage, TTS, API communication, and content extraction
+-   **Background Script**: Handles extension activation and communication between components
+-   **Content Script**: Extracts webpage content
+-   **Sidebar UI**: Provides the chat interface
+-   **Settings Page**: Allows configuration of API key and TTS settings
+-   **Utility Modules**: Handle storage, TTS, API communication, and content extraction
 
 ## License
 
@@ -180,10 +199,10 @@ Chirag Singhal (GitHub: [chirag127](https://github.com/chirag127))
 
 ## Acknowledgments
 
-- Google Gemini API for providing the AI capabilities
-- FastAPI for the backend framework
-- The browser extension APIs that make this possible
+-   Google Gemini API for providing the AI capabilities
+-   FastAPI for the backend framework
+-   The browser extension APIs that make this possible
 
 ---
 
-Last Updated: May 16, 2025
+Last Updated: May 18, 2025

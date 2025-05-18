@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Privacy Policy - WebPage Chatter</title>
+        <link rel="icon" href="favicon.ico" type="image/x-icon" />
+        <link rel="apple-touch-icon" href="icons/icon192.png" />
+        <style>
+            :root {
+                /* Color variables */
+                --primary-color: #2196f3;
+                --primary-dark: #1565c0;
+                --primary-light: #e3f2fd;
+                --accent-color: #ff9800;
+                --text-color: #e0e0e0;
+                --text-color-secondary: #9e9e9e;
+                --bg-color: #121212;
+                --bg-color-light: #1e1e1e;
+                --bg-color-lighter: #2d2d2d;
+                --success-color: #4caf50;
+                --error-color: #f44336;
+                --border-radius: 8px;
+                --transition: all 0.3s ease;
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+                    "Helvetica Neue", sans-serif;
+                background-color: var(--bg-color);
+                color: var(--text-color);
+                line-height: 1.6;
+            }
+
+            a {
+                color: var(--primary-color);
+                text-decoration: none;
+                transition: var(--transition);
+            }
+
+            a:hover {
+                color: var(--primary-light);
+                text-decoration: underline;
+            }
+
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 40px 20px;
+            }
+
+            header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 40px;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+                color: var(--primary-color);
+            }
+
+            .back-button {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 16px;
+                background-color: var(--bg-color-light);
+                border-radius: var(--border-radius);
+                border: 1px solid var(--bg-color-lighter);
+                color: var(--text-color);
+                font-weight: 500;
+                transition: var(--transition);
+            }
+
+            .back-button:hover {
+                background-color: var(--bg-color-lighter);
+                text-decoration: none;
+            }
+
+            .last-updated {
+                color: var(--text-color-secondary);
+                font-size: 0.9rem;
+                margin-bottom: 30px;
+            }
+
+            section {
+                margin-bottom: 40px;
+                padding: 30px;
+                background-color: var(--bg-color-light);
+                border-radius: var(--border-radius);
+                border: 1px solid var(--bg-color-lighter);
+            }
+
+            h2 {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+                color: var(--primary-color);
+                padding-bottom: 10px;
+                border-bottom: 1px solid var(--bg-color-lighter);
+            }
+
+            p {
+                margin-bottom: 15px;
+            }
+
+            ul {
+                margin-left: 20px;
+                margin-bottom: 15px;
+            }
+
+            li {
+                margin-bottom: 10px;
+            }
+
+            .highlight {
+                background-color: rgba(33, 150, 243, 0.1);
+                padding: 2px 5px;
+                border-radius: 3px;
+                color: var(--primary-color);
+            }
+
+            footer {
+                text-align: center;
+                margin-top: 60px;
+                color: var(--text-color-secondary);
+                font-size: 0.9rem;
+            }
+
+            @media (max-width: 768px) {
+                h1 {
+                    font-size: 1.8rem;
+                }
+
+                header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 20px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Privacy Policy</h1>
+                <a href="index.html" class="back-button">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Back to Home
+                </a>
+            </header>
+
+            <p class="last-updated">Last Updated: May 18, 2025</p>
+
+            <section id="introduction">
+                <h2>Introduction</h2>
+                <p>
+                    This Privacy Policy explains how WebPage Chatter ("we",
+                    "our", or "the extension") collects, uses, and protects your
+                    information when you use our browser extension. We are
+                    committed to ensuring the privacy and security of your data.
+                </p>
+                <p>
+                    By installing and using the WebPage Chatter extension, you
+                    agree to the collection and use of information in accordance
+                    with this policy.
+                </p>
+            </section>
+
+            <section id="permissions">
+                <h2>Required Permissions</h2>
+                <p>
+                    WebPage Chatter requires the following browser permissions
+                    to function properly:
+                </p>
+                <ul>
+                    <li>
+                        <span class="highlight">storage</span> - To save your
+                        settings (including your Gemini API key) and chat
+                        history locally on your device.
+                    </li>
+                    <li>
+                        <span class="highlight">contextMenus</span> - To add the
+                        "Chat with this page" option to your browser's
+                        right-click menu.
+                    </li>
+                    <li>
+                        <span class="highlight">activeTab</span> - To access and
+                        extract content from the webpage you're currently
+                        viewing.
+                    </li>
+                    <li>
+                        <span class="highlight">scripting</span> - To inject
+                        content scripts that extract webpage content.
+                    </li>
+                    <li>
+                        <span class="highlight">sidePanel</span> - To display
+                        the chat interface in a sidebar panel.
+                    </li>
+                    <li>
+                        <span class="highlight">tabs</span> - To detect when you
+                        navigate to a new page and update the chat context
+                        accordingly.
+                    </li>
+                    <li>
+                        <span class="highlight">host permissions</span>
+                        (<code>&lt;all_urls&gt;</code>) - To allow the extension
+                        to function on any website you visit.
+                    </li>
+                </ul>
+            </section>
+
+            <section id="information-collected">
+                <h2>Information We Collect</h2>
+                <p>WebPage Chatter collects the following information:</p>
+                <ul>
+                    <li>
+                        <strong>Webpage Content:</strong> Text, metadata, URL,
+                        title, and image alt text from webpages you actively
+                        choose to chat about.
+                    </li>
+                    <li>
+                        <strong>User Settings:</strong> Your preferences for the
+                        extension, including TTS settings.
+                    </li>
+                    <li>
+                        <strong>Chat History:</strong> Your questions and the
+                        AI's responses, stored locally on your device.
+                    </li>
+                    <li>
+                        <strong>Gemini API Key:</strong> Your personal Gemini
+                        API key that you provide in the settings.
+                    </li>
+                </ul>
+                <p><strong>What We DO NOT Collect:</strong></p>
+                <ul>
+                    <li>
+                        We do not collect your personal information (name,
+                        email, etc.).
+                    </li>
+                    <li>
+                        We do not track your browsing history beyond the current
+                        page you're chatting about.
+                    </li>
+                    <li>
+                        We do not collect data from pages where you haven't
+                        activated the extension.
+                    </li>
+                    <li>
+                        We do not store your data on our servers - all data is
+                        stored locally on your device.
+                    </li>
+                </ul>
+            </section>
+
+            <section id="data-usage">
+                <h2>How We Use Your Information</h2>
+                <p>
+                    The information we collect is used exclusively for the
+                    following purposes:
+                </p>
+                <ul>
+                    <li>
+                        To provide the core functionality of the extension -
+                        enabling you to chat with webpage content.
+                    </li>
+                    <li>
+                        To send webpage content to the Gemini AI API (using your
+                        provided API key) to generate responses to your
+                        questions.
+                    </li>
+                    <li>
+                        To save your preferences and settings for a better user
+                        experience.
+                    </li>
+                    <li>
+                        To store chat history locally for your future reference.
+                    </li>
+                </ul>
+                <p>
+                    We do not sell, rent, or share any of your information with
+                    third parties.
+                </p>
+            </section>
+
+            <section id="data-storage">
+                <h2>Data Storage & Security</h2>
+                <p>
+                    All data collected by WebPage Chatter is stored locally on
+                    your device using the browser's built-in storage APIs:
+                </p>
+                <ul>
+                    <li>
+                        <code>chrome.storage.sync</code> for settings (including
+                        your API key)
+                    </li>
+                    <li>
+                        <code>chrome.storage.local</code> for chat history and
+                        saved answers
+                    </li>
+                </ul>
+                <p>
+                    Your Gemini API key is stored securely in your browser's
+                    synced storage, which is encrypted by your browser. The key
+                    is only transmitted directly to Google's Gemini API servers
+                    when you make a query.
+                </p>
+                <p>
+                    Webpage content is temporarily processed by our backend
+                    server to communicate with the Gemini API, but we do not
+                    store this data on our servers beyond the duration of your
+                    request.
+                </p>
+            </section>
+
+            <section id="third-party">
+                <h2>Third-Party Services</h2>
+                <p>WebPage Chatter uses the following third-party services:</p>
+                <ul>
+                    <li>
+                        <strong>Google Gemini API:</strong> We use Google's
+                        Gemini API to process your queries and generate
+                        responses. Your webpage content and questions are sent
+                        to Google's servers using your own API key. Please refer
+                        to
+                        <a href="https://ai.google.dev/privacy" target="_blank"
+                            >Google's AI Privacy Policy</a
+                        >
+                        for more information on how they handle your data.
+                    </li>
+                </ul>
+            </section>
+
+            <section id="user-rights">
+                <h2>User Rights</h2>
+                <p>
+                    As a user of WebPage Chatter, you have the following rights
+                    regarding your data:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Access:</strong> You can view all locally stored
+                        data through your browser's developer tools.
+                    </li>
+                    <li>
+                        <strong>Deletion:</strong> You can clear your chat
+                        history and saved answers at any time through the
+                        extension interface.
+                    </li>
+                    <li>
+                        <strong>Control:</strong> You can uninstall the
+                        extension at any time, which will remove all locally
+                        stored data.
+                    </li>
+                </ul>
+            </section>
+
+            <section id="policy-changes">
+                <h2>Changes to This Privacy Policy</h2>
+                <p>
+                    We may update our Privacy Policy from time to time. We will
+                    notify you of any changes by posting the new Privacy Policy
+                    on this page and updating the "Last Updated" date.
+                </p>
+                <p>
+                    You are advised to review this Privacy Policy periodically
+                    for any changes. Changes to this Privacy Policy are
+                    effective when they are posted on this page.
+                </p>
+            </section>
+
+            <section id="contact">
+                <h2>Contact Information</h2>
+                <p>
+                    If you have any questions or concerns about this Privacy
+                    Policy, please contact us:
+                </p>
+                <ul>
+                    <li>
+                        By creating an issue on our
+                        <a
+                            href="https://github.com/chirag127/WebPage-Chatter/issues"
+                            target="_blank"
+                            >GitHub repository</a
+                        >
+                    </li>
+                </ul>
+            </section>
+
+            <footer>
+                <p>© 2025 Chirag Singhal. All rights reserved.</p>
+            </footer>
+        </div>
+    </body>
+</html>

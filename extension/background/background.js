@@ -321,6 +321,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 .catch((error) => sendResponse({ error: error.message }));
             return true; // Keep the message channel open for async response
 
+        case "getSuggestedQuestions":
+            // Forward the suggested questions request to the API
+            handleSuggestedQuestionsRequest(message.data)
+                .then((response) => sendResponse(response))
+                .catch((error) => sendResponse({ error: error.message }));
+            return true; // Keep the message channel open for async response
+
         case "validateApiKey":
             // Validate the API key format
             const isValid = validateApiKey(message.apiKey);
@@ -433,4 +440,109 @@ function validateApiKey(apiKey) {
     // This is a simplified pattern and may need to be adjusted
     const pattern = /^[A-Za-z0-9_-]{20,}$/;
     return pattern.test(apiKey);
+}
+
+/**
+ * Handle suggested questions request to the backend API
+ * @param {Object} data - The request data (api_key, webpage_content, count)
+ * @returns {Promise} - Promise that resolves with the API response
+ */
+async function handleSuggestedQuestionsRequest(data) {
+    try {
+        // Get the API endpoint from settings or use default from Config
+        const settings = await chrome.storage.sync.get([
+            "apiEndpoint",
+            "requestTimeout",
+        ]);
+
+        // Construct the API URL for suggested questions
+        let apiUrl =
+            settings.suggestionsEndpoint ||
+            Config.API.DEFAULT_SUGGESTIONS_ENDPOINT;
+
+        // If no specific suggestions endpoint is set, derive it from the chat endpoint
+        if (!settings.suggestionsEndpoint) {
+            const chatEndpoint =
+                settings.apiEndpoint || Config.API.DEFAULT_ENDPOINT;
+
+            // If the endpoint ends with "/chat", replace it with "/suggest-questions"
+            if (chatEndpoint.endsWith("/chat")) {
+                apiUrl = chatEndpoint.replace(/\/chat$/, "/suggest-questions");
+            } else {
+                // Otherwise, assume it's the base URL and append "/suggest-questions"
+                // First remove any trailing slash
+                const baseUrl = chatEndpoint.replace(/\/$/, "");
+                // Then append the path
+                apiUrl = `${baseUrl}/suggest-questions`;
+            }
+        }
+
+        console.log("Using suggestions API URL:", apiUrl);
+
+        const timeout = settings.requestTimeout || Config.API.DEFAULT_TIMEOUT;
+
+        // Create an AbortController for timeout handling
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        // Make the API request with timeout
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+            signal: controller.signal,
+        });
+
+        // Clear the timeout
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            let errorMessage = "Failed to get response from API";
+
+            try {
+                // Try to parse error as JSON
+                const errorData = await response.json();
+                errorMessage = errorData.detail || errorMessage;
+            } catch (jsonError) {
+                // If JSON parsing fails, use status text
+                errorMessage = `Server error (${response.status}): ${response.statusText}`;
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        // Parse the JSON response
+        const responseData = await response.json();
+
+        // Return the questions
+        return {
+            success: true,
+            questions: responseData.questions,
+            status: response.status,
+        };
+    } catch (error) {
+        console.error("API request error for suggested questions:", error);
+
+        // Provide more specific error messages based on error type
+        let errorMessage = error.message;
+
+        if (error.name === "AbortError") {
+            errorMessage =
+                "Request timed out. The server took too long to respond.";
+        } else if (
+            error.name === "TypeError" &&
+            error.message.includes("Failed to fetch")
+        ) {
+            errorMessage =
+                "Network error. Please check your internet connection and the API server status.";
+        }
+
+        return {
+            success: false,
+            error: errorMessage,
+            errorType: error.name,
+        };
+    }
 }

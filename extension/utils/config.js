@@ -11,7 +11,16 @@ const Config = {
         /**
          * Default API endpoint URL
          */
-        DEFAULT_ENDPOINT: "https://webpage-chatter.onrender.com/api/chat",
+        // DEFAULT_ENDPOINT: "https://webpage-chatter.onrender.com/api/chat",
+        DEFAULT_ENDPOINT: "http://localhost:8000/api/chat",
+
+        /**
+         * Default suggested questions endpoint URL
+         * This is derived from the chat endpoint by replacing /chat with /suggest-questions
+         * or by appending /suggest-questions to the base URL
+         */
+        DEFAULT_SUGGESTIONS_ENDPOINT:
+            "http://localhost:8000/api/suggest-questions",
 
         /**
          * Default request timeout in milliseconds

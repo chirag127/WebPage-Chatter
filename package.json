@@ -1,5 +1,5 @@
 {
-  "dependencies": {
+  "devDependencies": {
     "sharp": "^0.34.1"
   }
 }

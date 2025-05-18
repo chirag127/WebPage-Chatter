@@ -2,6 +2,7 @@
 # pip install google-genai tenacity
 
 import asyncio
+import json
 import logging
 from typing import List, AsyncGenerator
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -182,3 +183,122 @@ async def get_gemini_response_stream(user_api_key: str, model_name: str, input_t
 
         # Return a user-friendly error message
         yield user_message
+
+async def generate_question_suggestions(user_api_key: str, model_name: str, webpage_content: str, count: int = 5) -> List[str]:
+    """
+    Generate suggested questions based on webpage content.
+
+    Args:
+        user_api_key: The user's Gemini API key.
+        model_name: The name of the Gemini model to use.
+        webpage_content: The content of the webpage.
+        count: Number of questions to generate (default: 5).
+
+    Returns:
+        List[str]: A list of suggested questions.
+    """
+    try:
+        # Initialize Gemini client with user's API key
+        client = genai.Client(api_key=user_api_key)
+
+        # Create a prompt for generating questions
+        prompt = f"""
+        Based on the following webpage content, generate {count} relevant and diverse questions that a user might want to ask.
+
+        The questions should:
+        1. Be directly related to the content of the webpage
+        2. Include a mix of question types (e.g., summarization, explanation, comparison, analysis)
+        3. Be clear, concise, and specific
+        4. Avoid redundancy or overlap between questions
+        5. Be phrased in natural, conversational language
+
+        Format your response as a JSON array of strings containing only the questions.
+
+        WEBPAGE CONTENT:
+        {webpage_content}
+
+        QUESTIONS:
+        """
+
+        # Prepare content for Gemini API
+        contents = [
+            types.Content(
+                role="user",
+                parts=[
+                    types.Part.from_text(text=prompt),
+                ],
+            ),
+        ]
+
+        # Configure response generation
+        generate_content_config = types.GenerateContentConfig(
+            response_mime_type="text/plain",
+        )
+
+        # Use the retry decorator for the API call
+        @gemini_retry_decorator()
+        def get_content():
+            return client.models.generate_content(
+                model=model_name,
+                contents=contents,
+                config=generate_content_config,
+            )
+
+        # Get the complete response
+        response = get_content()
+        response_text = response.text.strip()
+
+        # Try to parse the response as JSON
+        try:
+            # Check if the response is already in JSON format
+            if response_text.startswith("[") and response_text.endswith("]"):
+                questions = json.loads(response_text)
+            else:
+                # Try to extract JSON array from the response text
+                # Look for text between square brackets
+                import re
+                json_match = re.search(r'\[(.*?)\]', response_text, re.DOTALL)
+                if json_match:
+                    # Try to parse the extracted text as JSON
+                    questions = json.loads(f"[{json_match.group(1)}]")
+                else:
+                    # If no JSON array found, split by newlines and clean up
+                    questions = [q.strip() for q in response_text.split('\n') if q.strip()]
+                    # Remove any numbering (e.g., "1.", "2.", etc.)
+                    questions = [re.sub(r'^\d+[\.\)]\s*', '', q) for q in questions]
+                    # Remove any quotes
+                    questions = [q.strip('"\'') for q in questions]
+        except json.JSONDecodeError:
+            # If JSON parsing fails, split by newlines and clean up
+            questions = [q.strip() for q in response_text.split('\n') if q.strip()]
+            # Remove any numbering (e.g., "1.", "2.", etc.)
+            import re
+            questions = [re.sub(r'^\d+[\.\)]\s*', '', q) for q in questions]
+            # Remove any quotes
+            questions = [q.strip('"\'') for q in questions]
+
+        # Limit to the requested count
+        questions = questions[:count]
+
+        # Ensure we have at least one question
+        if not questions:
+            questions = ["What is this webpage about?"]
+
+        return questions
+
+    except Exception as e:
+        # Handle all exceptions with specific error messages based on error type
+        error_type = type(e).__name__
+        error_message = str(e)
+
+        # Log the error
+        logger.error(f"Error generating question suggestions: {error_type}: {error_message}")
+
+        # Return default questions if there's an error
+        return [
+            "What is this webpage about?",
+            "Can you summarize the key points?",
+            "What are the main topics discussed?",
+            "How does this information relate to current events?",
+            "What are the implications of this content?"
+        ]

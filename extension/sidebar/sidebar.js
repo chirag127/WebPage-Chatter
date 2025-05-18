@@ -42,6 +42,21 @@ const closeModal = document.getElementById("close-modal");
 const loadingIndicator = document.getElementById("loading-indicator");
 const elapsedTimeElement = document.getElementById("elapsed-time");
 
+// Suggested Questions Elements
+const suggestedQuestionsContainer = document.getElementById(
+    "suggested-questions-container"
+);
+const suggestedQuestionsList = document.getElementById(
+    "suggested-questions-list"
+);
+const refreshSuggestionsButton = document.getElementById("refresh-suggestions");
+const suggestedQuestionsLoading = document.getElementById(
+    "suggested-questions-loading"
+);
+const suggestedQuestionsError = document.getElementById(
+    "suggested-questions-error"
+);
+
 // Webpage info elements
 const webpageTitle = document.getElementById("webpage-title");
 const webpageUrl = document.getElementById("webpage-url");
@@ -84,6 +99,10 @@ let currentPage = 1;
 let itemsPerPage = 5;
 let totalPages = 1;
 let currentSearchTerm = "";
+
+// Suggested questions state
+let suggestedQuestions = [];
+let isFetchingSuggestions = false;
 
 // Initialize the sidebar
 document.addEventListener("DOMContentLoaded", async () => {
@@ -286,6 +305,31 @@ function setupEventListeners() {
             savedAnswersModal.classList.add("hidden");
         }
     });
+
+    // Refresh suggestions button click
+    refreshSuggestionsButton.addEventListener("click", () => {
+        fetchSuggestedQuestions(true); // Force refresh
+    });
+
+    // Add click event listeners for suggested questions
+    suggestedQuestionsList.addEventListener("click", (event) => {
+        const questionElement = event.target.closest(".suggested-question");
+        if (questionElement) {
+            const question = questionElement.textContent;
+            chatInput.value = question;
+            handleSendMessage();
+        }
+    });
+
+    // Add click event listeners for suggested questions
+    suggestedQuestionsList.addEventListener("click", (event) => {
+        const questionElement = event.target.closest(".suggested-question");
+        if (questionElement) {
+            const question = questionElement.textContent;
+            chatInput.value = question;
+            handleSendMessage();
+        }
+    });
 }
 
 /**
@@ -338,6 +382,12 @@ async function extractPageContent(isRefresh = false, reason = "") {
                 }
                 addSystemMessage(refreshMessage);
             }
+
+            // Fetch suggested questions based on the new content
+            console.log(
+                "Calling fetchSuggestedQuestions after extracting page content"
+            );
+            fetchSuggestedQuestions(isRefresh);
         } else {
             console.error("Failed to extract page content:", response.error);
             addSystemMessage(
@@ -1436,4 +1486,120 @@ function stopProcessingTimer() {
         clearInterval(processingTimerId);
         processingTimerId = null;
     }
+}
+
+/**
+ * Fetch suggested questions based on the webpage content
+ * @param {boolean} forceRefresh - Whether to force a refresh of suggestions
+ */
+async function fetchSuggestedQuestions(forceRefresh = false) {
+    // Don't fetch if already fetching or if we already have suggestions and not forcing refresh
+    if (
+        isFetchingSuggestions ||
+        (suggestedQuestions.length > 0 && !forceRefresh)
+    ) {
+        return;
+    }
+
+    // Check if API key is set
+    const settings = await StorageUtils.getSettings();
+    if (!settings.apiKey) {
+        suggestedQuestionsError.textContent =
+            "API key required to generate suggestions";
+        suggestedQuestionsError.classList.remove("hidden");
+        return;
+    }
+
+    // Check if we have page content
+    if (!pageContent || pageContent.trim() === "") {
+        suggestedQuestionsError.textContent =
+            "No page content available for suggestions";
+        suggestedQuestionsError.classList.remove("hidden");
+        return;
+    }
+
+    try {
+        isFetchingSuggestions = true;
+
+        // Show loading indicator
+        suggestedQuestionsLoading.classList.remove("hidden");
+        suggestedQuestionsError.classList.add("hidden");
+
+        // Clear existing questions if refreshing
+        if (forceRefresh) {
+            suggestedQuestionsList.innerHTML = "";
+            suggestedQuestions = [];
+        }
+
+        // Prepare request data
+        const requestData = {
+            api_key: settings.apiKey,
+            webpage_content: pageContent,
+            count: 3, // Request 3 suggested questions
+        };
+
+        console.log("Sending request for suggested questions with data:", {
+            api_key: "REDACTED",
+            webpage_content_length: pageContent.length,
+            count: requestData.count,
+        });
+
+        // Send request to get suggested questions
+        const response = await APIUtils.getSuggestedQuestions(requestData);
+
+        console.log("Received suggested questions response:", response);
+
+        if (
+            response.success &&
+            response.questions &&
+            response.questions.length > 0
+        ) {
+            // Store the questions
+            suggestedQuestions = response.questions;
+            console.log("Storing suggested questions:", suggestedQuestions);
+
+            // Display the questions
+            displaySuggestedQuestions(suggestedQuestions);
+
+            // Show the container
+            suggestedQuestionsContainer.classList.remove("hidden");
+        } else {
+            console.error("Failed to get valid suggested questions:", response);
+            // Show error message
+            suggestedQuestionsError.textContent =
+                response.error || "Failed to generate suggestions";
+            suggestedQuestionsError.classList.remove("hidden");
+
+            // Make sure the container is visible so the error is shown
+            suggestedQuestionsContainer.classList.remove("hidden");
+        }
+    } catch (error) {
+        console.error("Error fetching suggested questions:", error);
+        suggestedQuestionsError.textContent =
+            "Error generating suggestions: " + (error.message || error);
+        suggestedQuestionsError.classList.remove("hidden");
+
+        // Make sure the container is visible so the error is shown
+        suggestedQuestionsContainer.classList.remove("hidden");
+    } finally {
+        isFetchingSuggestions = false;
+        suggestedQuestionsLoading.classList.add("hidden");
+    }
+}
+
+/**
+ * Display suggested questions in the UI
+ * @param {Array} questions - Array of question strings
+ */
+function displaySuggestedQuestions(questions) {
+    // Clear the list
+    suggestedQuestionsList.innerHTML = "";
+
+    // Add each question as a button
+    questions.forEach((question) => {
+        const questionElement = document.createElement("button");
+        questionElement.className = "suggested-question";
+        questionElement.textContent = question;
+        suggestedQuestionsList.appendChild(questionElement);
+    });
 }
