@@ -11,8 +11,8 @@ const Config = {
         /**
          * Base API URL
          */
-        // BASE_API_URL: "https://webpage-chatter.onrender.com",
-        BASE_API_URL: "http://localhost:8000",
+        BASE_API_URL: "https://webpage-chatter.onrender.com",
+        // BASE_API_URL: "http://localhost:8000",
 
         /**
          * Default API endpoint URL for chat
