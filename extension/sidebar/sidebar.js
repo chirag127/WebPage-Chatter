@@ -28,14 +28,6 @@ const historyButton = document.getElementById("history-button");
 const historyCount = document.getElementById("history-count");
 const apiKeyMissing = document.getElementById("api-key-missing");
 const openSettings = document.getElementById("open-settings");
-const ttsControls = document.getElementById("tts-controls");
-const ttsPlay = document.getElementById("tts-play");
-const ttsPause = document.getElementById("tts-pause");
-const ttsStop = document.getElementById("tts-stop");
-const ttsSpeed = document.getElementById("tts-speed");
-const saveControls = document.getElementById("save-controls");
-const saveAnswer = document.getElementById("save-answer");
-const viewSaved = document.getElementById("view-saved");
 const savedAnswersModal = document.getElementById("saved-answers-modal");
 const savedAnswersList = document.getElementById("saved-answers-list");
 const closeModal = document.getElementById("close-modal");
@@ -114,10 +106,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         apiKeyMissing.classList.remove("hidden");
     }
 
-    // Load TTS settings
-    if (settings.ttsSpeed) {
-        ttsSpeed.value = settings.ttsSpeed;
-    }
+    // TTS settings loading removed
 
     // Extract page content
     await extractPageContent();
@@ -259,30 +248,7 @@ function setupEventListeners() {
         }
     });
 
-    // TTS controls
-    ttsPlay.addEventListener("click", () => {
-        TTSUtils.play();
-        ttsPlay.classList.add("hidden");
-        ttsPause.classList.remove("hidden");
-    });
-
-    ttsPause.addEventListener("click", () => {
-        TTSUtils.pause();
-        ttsPause.classList.add("hidden");
-        ttsPlay.classList.remove("hidden");
-    });
-
-    ttsStop.addEventListener("click", () => {
-        TTSUtils.stop();
-        ttsPause.classList.add("hidden");
-        ttsPlay.classList.remove("hidden");
-    });
-
-    ttsSpeed.addEventListener("change", async (event) => {
-        const speed = parseFloat(event.target.value);
-        TTSUtils.setRate(speed);
-        await StorageUtils.saveSettings({ ttsSpeed: speed });
-    });
+    // TTS controls removed
 
     // Manual refresh button click
     manualRefreshButton.addEventListener("click", async () => {
@@ -312,11 +278,7 @@ function setupEventListeners() {
         }
     });
 
-    // Save answer button click
-    saveAnswer.addEventListener("click", saveCurrentAnswer);
-
-    // View saved button click
-    viewSaved.addEventListener("click", showSavedAnswers);
+    // Save and view buttons removed
 
     // Close modal button click
     closeModal.addEventListener("click", () => {
@@ -560,14 +522,8 @@ async function handleSendMessage() {
                 isNonStreaming: response.isNonStreaming || false,
             });
 
-            // Only show TTS and save controls if we have content
+            // TTS and save controls removed
             if (currentAssistantMessage.trim().length > 0) {
-                ttsControls.classList.remove("hidden");
-                saveControls.classList.remove("hidden");
-
-                // Set up TTS for the response
-                TTSUtils.setText(currentAssistantMessage);
-
                 // Automatically save chat session to history
                 await saveChatSessionToHistory();
 
@@ -822,6 +778,21 @@ function addAssistantMessage(message) {
 
     // Add click event to TTS button
     ttsButton.addEventListener("click", async () => {
+        // If already speaking, toggle play/pause
+        if (TTSUtils.isSpeaking()) {
+            const isPlaying = TTSUtils.togglePlayPause();
+
+            // Update button appearance based on state
+            if (isPlaying) {
+                ttsButton.classList.remove("tts-paused");
+                ttsButton.title = "Pause speech";
+            } else {
+                ttsButton.classList.add("tts-paused");
+                ttsButton.title = "Resume speech";
+            }
+            return;
+        }
+
         // Get the message text
         const messageText = contentElement.textContent || "";
 
@@ -839,10 +810,24 @@ function addAssistantMessage(message) {
 
         // Set up TTS with the message text
         TTSUtils.setText(messageText);
+
+        // Create the utterance
+        TTSUtils.createUtterance();
+
+        // Set up event listeners for TTS events before playing
+        setupTTSHighlighting(contentElement, messageElement);
+
+        // Add event listener for when speech ends
+        TTSUtils.utterance.onend = function () {
+            ttsButton.title = "Read aloud";
+            ttsButton.classList.remove("tts-paused");
+        };
+
+        // Play the TTS
         TTSUtils.play();
 
-        // Show TTS controls
-        ttsControls.classList.remove("hidden");
+        // Update button state
+        ttsButton.title = "Pause speech";
     });
 
     messageHeader.appendChild(ttsButton);
@@ -888,141 +873,237 @@ function addSystemMessage(message) {
 }
 
 /**
- * Save the current answer to storage
+ * Set up TTS highlighting for a message
+ * @param {HTMLElement} contentElement - The message content element
+ * @param {HTMLElement} messageElement - The message element
  */
-async function saveCurrentAnswer() {
-    if (!currentAssistantMessage) {
+function setupTTSHighlighting(contentElement, messageElement) {
+    // Remove any existing highlights
+    const existingHighlights = contentElement.querySelectorAll(
+        ".tts-highlight, .tts-active"
+    );
+    existingHighlights.forEach((el) => {
+        const parent = el.parentNode;
+        if (parent) {
+            // Replace the highlight span with its text content
+            parent.replaceChild(document.createTextNode(el.textContent), el);
+            // Normalize the parent to merge adjacent text nodes
+            parent.normalize();
+        }
+    });
+
+    // Create a text version of the content for processing
+    const textContent = contentElement.textContent;
+
+    // Split the text into words with a more comprehensive regex that handles punctuation better
+    // This regex splits on whitespace but keeps punctuation attached to words
+    const words = textContent.match(/\S+/g) || [];
+
+    // Create a map of word indices to their positions in the DOM
+    const wordMap = [];
+
+    // Process the DOM to find text nodes and map words to them
+    function processNode(node, wordIndex) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent;
+            // Skip empty text nodes
+            if (!text.trim()) {
+                return wordIndex;
+            }
+
+            // Match words in this text node
+            const nodeWords = text.match(/\S+/g) || [];
+
+            for (let i = 0; i < nodeWords.length; i++) {
+                const word = nodeWords[i];
+                const wordPosition = text.indexOf(
+                    word,
+                    i > 0
+                        ? text.indexOf(nodeWords[i - 1]) +
+                              nodeWords[i - 1].length
+                        : 0
+                );
+
+                wordMap.push({
+                    word: word,
+                    node: node,
+                    index: wordIndex + i,
+                    position: wordPosition,
+                    length: word.length,
+                });
+            }
+
+            return wordIndex + nodeWords.length;
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            // Skip script and style elements
+            if (node.tagName === "SCRIPT" || node.tagName === "STYLE") {
+                return wordIndex;
+            }
+
+            let currentIndex = wordIndex;
+            for (const child of node.childNodes) {
+                currentIndex = processNode(child, currentIndex);
+            }
+            return currentIndex;
+        }
+        return wordIndex;
+    }
+
+    processNode(contentElement, 0);
+
+    // Set up event listeners for the utterance
+    const utterance = TTSUtils.utterance;
+
+    if (!utterance) {
+        console.error("No utterance available for TTS highlighting");
         return;
     }
 
-    try {
-        // Get saved answers from storage
-        const savedAnswers = await StorageUtils.getSavedAnswers();
+    // Current word index being spoken
+    let currentWordIndex = -1; // Start at -1 so first word gets highlighted
+    let activeHighlight = null;
+    let previousHighlights = [];
 
-        // Add current chat session to saved answers
-        savedAnswers.push(currentChatSession);
+    // Pre-highlight the first few words to give context
+    function preHighlightInitialWords() {
+        // Clear any existing highlights first
+        clearAllHighlights();
 
-        // Save to storage
-        await StorageUtils.saveSavedAnswers(savedAnswers);
+        // Pre-highlight the first 3 words (or fewer if there aren't enough)
+        const wordsToPreHighlight = Math.min(3, words.length);
 
-        // Show confirmation
-        addSystemMessage("Answer saved successfully.");
-    } catch (error) {
-        console.error("Error saving answer:", error);
-        addSystemMessage("Failed to save answer.");
-    }
-}
-
-/**
- * Show saved answers in modal
- */
-async function showSavedAnswers() {
-    try {
-        // Get saved answers from storage
-        const savedAnswers = await StorageUtils.getSavedAnswers();
-
-        // Clear saved answers list
-        savedAnswersList.innerHTML = "";
-
-        if (savedAnswers.length === 0) {
-            const noAnswersElement = document.createElement("div");
-            noAnswersElement.className = "no-saved-answers";
-            noAnswersElement.textContent = "No saved answers yet.";
-            savedAnswersList.appendChild(noAnswersElement);
-        } else {
-            // Add saved answers to list
-            savedAnswers.forEach((session, index) => {
-                const sessionElement = document.createElement("div");
-                sessionElement.className = "saved-session";
-
-                const headerElement = document.createElement("div");
-                headerElement.className = "saved-session-header";
-
-                const titleElement = document.createElement("h3");
-                titleElement.textContent = session.pageTitle || "Untitled Page";
-
-                const dateElement = document.createElement("span");
-                dateElement.className = "saved-date";
-                dateElement.textContent = new Date(
-                    session.timestamp
-                ).toLocaleString();
-
-                const deleteButton = document.createElement("button");
-                deleteButton.className = "delete-button";
-                deleteButton.innerHTML = "&times;";
-                deleteButton.title = "Delete";
-                deleteButton.addEventListener("click", (event) => {
-                    event.stopPropagation();
-                    deleteSavedAnswer(index);
-                });
-
-                headerElement.appendChild(titleElement);
-                headerElement.appendChild(dateElement);
-                headerElement.appendChild(deleteButton);
-
-                const contentElement = document.createElement("div");
-                contentElement.className = "saved-session-content hidden";
-
-                // Add messages to content
-                session.messages.forEach((message) => {
-                    const messageElement = document.createElement("div");
-                    messageElement.className = `saved-message ${message.role}-message`;
-
-                    const roleElement = document.createElement("div");
-                    roleElement.className = "message-role";
-                    roleElement.textContent =
-                        message.role === "user" ? "You:" : "Assistant:";
-
-                    const textElement = document.createElement("div");
-                    textElement.className = "message-text";
-                    textElement.textContent = message.content;
-
-                    messageElement.appendChild(roleElement);
-                    messageElement.appendChild(textElement);
-                    contentElement.appendChild(messageElement);
-                });
-
-                // Toggle content visibility on header click
-                headerElement.addEventListener("click", () => {
-                    contentElement.classList.toggle("hidden");
-                });
-
-                sessionElement.appendChild(headerElement);
-                sessionElement.appendChild(contentElement);
-                savedAnswersList.appendChild(sessionElement);
-            });
+        for (let i = 0; i < wordsToPreHighlight; i++) {
+            const wordInfo = wordMap.find((w) => w.index === i);
+            if (wordInfo) {
+                const highlight = highlightWord(wordInfo, i === 0);
+                if (highlight && i === 0) {
+                    activeHighlight = highlight;
+                } else if (highlight) {
+                    previousHighlights.push(highlight);
+                }
+            }
         }
-
-        // Show modal
-        savedAnswersModal.classList.remove("hidden");
-    } catch (error) {
-        console.error("Error showing saved answers:", error);
-        addSystemMessage("Failed to load saved answers.");
     }
+
+    // Function to highlight a specific word
+    function highlightWord(wordInfo, isActive = false) {
+        if (!wordInfo) return null;
+
+        const wordNode = wordInfo.node;
+        const wordText = wordInfo.word;
+        const wordPosition = wordInfo.position;
+
+        try {
+            // Create a range for this word
+            const range = document.createRange();
+            range.setStart(wordNode, wordPosition);
+            range.setEnd(wordNode, wordPosition + wordInfo.length);
+
+            // Create the highlight span
+            const highlightSpan = document.createElement("span");
+            highlightSpan.className = isActive
+                ? "tts-highlight tts-active"
+                : "tts-highlight";
+            highlightSpan.textContent = wordText;
+            highlightSpan.dataset.wordIndex = wordInfo.index;
+
+            // Replace the text with the highlight span
+            range.deleteContents();
+            range.insertNode(highlightSpan);
+
+            return highlightSpan;
+        } catch (error) {
+            console.error("Error highlighting word:", error, wordInfo);
+            return null;
+        }
+    }
+
+    // Function to clear all highlights
+    function clearAllHighlights() {
+        const allHighlights = contentElement.querySelectorAll(
+            ".tts-highlight, .tts-active"
+        );
+        allHighlights.forEach((el) => {
+            const parent = el.parentNode;
+            if (parent) {
+                parent.replaceChild(
+                    document.createTextNode(el.textContent),
+                    el
+                );
+                parent.normalize();
+            }
+        });
+
+        activeHighlight = null;
+        previousHighlights = [];
+    }
+
+    // Handle the start event
+    utterance.onstart = () => {
+        currentWordIndex = -1; // Start at -1 so first boundary event moves to index 0
+        preHighlightInitialWords();
+    };
+
+    // Handle the end event
+    utterance.onend = () => {
+        clearAllHighlights();
+    };
+
+    // Handle the boundary event (word or sentence boundary)
+    utterance.onboundary = (event) => {
+        if (event.name === "word") {
+            // Update the current word index
+            currentWordIndex = Math.min(currentWordIndex + 1, words.length - 1);
+
+            // Find the corresponding word in our map
+            const wordInfo = wordMap.find((w) => w.index === currentWordIndex);
+
+            if (wordInfo) {
+                // Remove active class from previous highlight
+                if (activeHighlight) {
+                    activeHighlight.classList.remove("tts-active");
+                    previousHighlights.push(activeHighlight);
+
+                    // Keep only the last 2 previous highlights
+                    if (previousHighlights.length > 2) {
+                        const oldestHighlight = previousHighlights.shift();
+                        if (oldestHighlight && oldestHighlight.parentNode) {
+                            oldestHighlight.parentNode.replaceChild(
+                                document.createTextNode(
+                                    oldestHighlight.textContent
+                                ),
+                                oldestHighlight
+                            );
+                        }
+                    }
+                }
+
+                // Highlight the current word
+                const newHighlight = highlightWord(wordInfo, true);
+                if (newHighlight) {
+                    activeHighlight = newHighlight;
+
+                    // Look ahead and pre-highlight the next word if available
+                    const nextWordInfo = wordMap.find(
+                        (w) => w.index === currentWordIndex + 1
+                    );
+                    if (nextWordInfo) {
+                        highlightWord(nextWordInfo, false);
+                    }
+
+                    // Scroll the highlight into view with smooth behavior
+                    activeHighlight.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                        inline: "nearest",
+                    });
+                }
+            }
+        }
+    };
 }
 
-/**
- * Delete a saved answer
- * @param {number} index - The index of the answer to delete
- */
-async function deleteSavedAnswer(index) {
-    try {
-        // Get saved answers from storage
-        const savedAnswers = await StorageUtils.getSavedAnswers();
-
-        // Remove answer at index
-        savedAnswers.splice(index, 1);
-
-        // Save to storage
-        await StorageUtils.saveSavedAnswers(savedAnswers);
-
-        // Refresh saved answers list
-        showSavedAnswers();
-    } catch (error) {
-        console.error("Error deleting saved answer:", error);
-        addSystemMessage("Failed to delete saved answer.");
-    }
-}
+// Save/view functions removed
 
 /**
  * Load chat history from storage

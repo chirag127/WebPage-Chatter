@@ -105,6 +105,18 @@ const TTSUtils = {
 
         // Set rate
         this.utterance.rate = this.rate;
+
+        // Set language to match voice if available
+        if (this.voice && this.voice.lang) {
+            this.utterance.lang = this.voice.lang;
+        }
+
+        // Enable word boundary events for highlighting
+        this.utterance.onboundary = this.utterance.onboundary || function () {};
+
+        // Set other properties to improve word boundary detection
+        this.utterance.pitch = 1.0;
+        this.utterance.volume = 1.0;
     },
 
     /**
@@ -138,6 +150,42 @@ const TTSUtils = {
      */
     stop: function () {
         this.synth.cancel();
+    },
+
+    /**
+     * Toggle between play and pause
+     * @returns {boolean} - Whether speech is now playing (true) or paused (false)
+     */
+    togglePlayPause: function () {
+        if (this.synth.speaking) {
+            if (this.synth.paused) {
+                this.synth.resume();
+                return true;
+            } else {
+                this.synth.pause();
+                return false;
+            }
+        } else {
+            // If not speaking, start speaking
+            this.play();
+            return true;
+        }
+    },
+
+    /**
+     * Check if speech synthesis is currently speaking
+     * @returns {boolean} - Whether speech synthesis is speaking
+     */
+    isSpeaking: function () {
+        return this.synth.speaking;
+    },
+
+    /**
+     * Check if speech synthesis is currently paused
+     * @returns {boolean} - Whether speech synthesis is paused
+     */
+    isPaused: function () {
+        return this.synth.paused;
     },
 };
 

@@ -165,14 +165,14 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow-y: auto; /* Make the entire container scrollable */
+    overflow-y: auto; /* Make the container scrollable */
     scrollbar-width: thin; /* Firefox */
     scrollbar-color: #bbdefb #f5f5f5; /* Firefox */
+    padding-bottom: 16px; /* Add padding at the bottom for better spacing */
 }
 
 .chat-messages {
-    flex: 1;
-    padding: 16px;
+    padding: 16px 16px 0 16px; /* Remove bottom padding to reduce gap with suggested questions */
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -230,7 +230,6 @@
 .chat-input-container {
     display: flex;
     padding: 16px;
-    border-top: 1px solid #e0e0e0;
     background-color: #ffffff;
 }
 
@@ -276,15 +275,36 @@
 
 /* Suggested Questions Styles */
 .suggested-questions-container {
-    padding: 8px 16px;
+    padding: 12px 16px;
     background-color: #f5f5f5;
     border-top: 1px solid #e0e0e0;
     min-height: 40px; /* Minimum height to ensure visibility */
     display: flex;
     flex-direction: column;
     flex-shrink: 0; /* Prevent container from shrinking */
-    margin-top: 8px; /* Add space between chat messages and suggested questions */
-    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05); /* Add subtle shadow for visual separation */
+    max-height: 140px; /* Height for header (24px) + two question buttons (2 * 36px) + padding + spacing */
+    overflow-y: auto; /* Make it scrollable if content exceeds max-height */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #bbdefb #f5f5f5; /* Firefox */
+    position: relative; /* For the scroll indicator */
+}
+
+/* Add a subtle gradient at the bottom to indicate more content */
+.suggested-questions-container::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(
+        to bottom,
+        rgba(245, 245, 245, 0),
+        rgba(245, 245, 245, 0.95)
+    );
+    pointer-events: none; /* Allow clicks to pass through */
+    z-index: 1; /* Ensure it's above the content */
+    opacity: 0.8; /* Make it slightly transparent */
 }
 
 .suggested-questions-header {
@@ -319,13 +339,14 @@
 
 .suggested-questions-list {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-direction: column; /* Stack questions vertically */
+    gap: 10px; /* Increase spacing between questions */
     padding-bottom: 8px; /* Add padding at the bottom */
-    max-height: none; /* Remove fixed height since parent container is scrollable */
+    overflow-y: visible; /* Ensure content is visible */
+    margin-top: 8px; /* Increase spacing from header */
 }
 
-/* Webkit scrollbar styles for the messages-and-suggestions-container */
+/* Webkit scrollbar styles for the messages container */
 .messages-and-suggestions-container::-webkit-scrollbar {
     width: 6px;
 }
@@ -343,20 +364,42 @@
     background-color: #2196f3;
 }
 
+/* Webkit scrollbar styles for the suggested questions container */
+.suggested-questions-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.suggested-questions-container::-webkit-scrollbar-track {
+    background: #f5f5f5;
+}
+
+.suggested-questions-container::-webkit-scrollbar-thumb {
+    background-color: #bbdefb;
+    border-radius: 6px;
+}
+
+.suggested-questions-container::-webkit-scrollbar-thumb:hover {
+    background-color: #2196f3;
+}
+
 .suggested-question {
     background-color: #ffffff;
     border: 1px solid #e0e0e0;
     border-radius: 16px;
-    padding: 6px 12px;
+    padding: 8px 12px;
     font-size: 13px;
     cursor: pointer;
     transition: all 0.2s ease;
     color: #333333;
-    max-width: 100%;
+    width: 100%; /* Take full width of container */
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: inline-block;
+    white-space: normal; /* Allow text to wrap */
+    display: block; /* Change to block for full width */
+    min-height: 36px; /* Minimum height for consistent sizing */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    line-height: 1.3; /* Improve readability for wrapped text */
+    word-break: break-word; /* Break words to prevent overflow */
+    text-align: left; /* Ensure text is left-aligned */
 }
 
 .suggested-question:hover {
@@ -394,56 +437,7 @@
     animation: spin 1s linear infinite;
 }
 
-.tts-controls {
-    display: flex;
-    align-items: center;
-    padding: 8px 16px;
-    border-top: 1px solid #e0e0e0;
-    background-color: #f5f5f5;
-}
-
-.tts-button {
-    background: none;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    padding: 4px 8px;
-    margin-right: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s;
-}
-
-.tts-button:hover {
-    background-color: #e0e0e0;
-}
-
-.tts-speed-container {
-    display: flex;
-    align-items: center;
-    margin-left: auto;
-}
-
-.tts-speed-container label {
-    margin-right: 8px;
-    font-size: 14px;
-}
-
-.tts-speed {
-    padding: 4px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.save-controls {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 16px;
-    border-top: 1px solid #e0e0e0;
-    background-color: #f5f5f5;
-}
+/* TTS controls and save controls styles removed */
 
 .button {
     padding: 8px 16px;
@@ -610,9 +604,35 @@
     color: #2196f3;
 }
 
+.message-tts-button.tts-paused {
+    background-color: #e3f2fd;
+    color: #2196f3;
+}
+
+.message-tts-button.tts-paused:hover {
+    background-color: #bbdefb;
+}
+
 .message-text {
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+/* TTS Highlighting Styles */
+.tts-highlight {
+    background-color: rgba(33, 150, 243, 0.2);
+    border-radius: 3px;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    display: inline-block;
+}
+
+.tts-active {
+    background-color: rgba(33, 150, 243, 0.4);
+    border-bottom: 2px solid #2196f3;
+    box-shadow: 0 1px 3px rgba(33, 150, 243, 0.3);
+    transform: scale(1.02);
+    z-index: 1;
 }
 
 /* Markdown Content Styling */
